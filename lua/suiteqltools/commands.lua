@@ -11,6 +11,8 @@ M.command_list={
     {value="ToggleQueryMode", callback=RunSuiteQL.toggleDisplayMode},
     {value="CloseQuery", callback=RunSuiteQL.closeQuery},
     {value="SortColumn", callback=RunSuiteQL.sortColumn},
+    {value="NextPage", callback=RunSuiteQL.nextPage},
+    {value="PrevPage", callback=RunSuiteQL.prevPage},
 }
 
 M.runCommand=function(command)

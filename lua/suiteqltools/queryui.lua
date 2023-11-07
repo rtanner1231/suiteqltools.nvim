@@ -17,6 +17,7 @@ function QueryUI:new()
     self.currentMode=QueryConfig.initialMode
     self.currentJSON=nil
     self.sortDir='ASC'
+    self.page=1
     local initialHeight
     if QueryConfig.openFull then
         initialHeight=QueryConfig.fullHeight
@@ -64,16 +65,25 @@ function QueryUI:getJSON()
 
 end
 
+function QueryUI:_writePageText()
+    local pageStr=tostring(self.page)
+    print('Page: '..pageStr)
+    --vim.api.nvim_buf_set_text(self.split.bufnr,0,0,0,#pageStr,{pageStr})
+end
+
 function QueryUI:render()
     vim.api.nvim_buf_set_option(self.split.bufnr,'modifiable',true)
     vim.api.nvim_buf_set_option(self.split.bufnr,'readonly',false)
     self:clear()
     if self.currentMode=='table' then
         self.dataTable:render()
+        vim.api.nvim_buf_set_option(self.split.bufnr,'readonly',false)
+        vim.api.nvim_buf_set_option(self.split.bufnr,'modifiable',true)
     else
         local json=self:getJSON()
         vim.api.nvim_buf_set_lines(self.split.bufnr,1,1,false,json)
     end
+    self:_writePageText()
     vim.api.nvim_buf_set_option(self.split.bufnr,'modifiable',false)
     vim.api.nvim_buf_set_option(self.split.bufnr,'readonly',true)
 
@@ -94,8 +104,9 @@ function QueryUI:toggleDisplayMode()
     self:render()
 end
 
-function QueryUI:setItems(items)
+function QueryUI:setItems(items,page)
     self.items=items
+    self.page=page
     self.currentJSON=nil
     self.dataTable=self:initTable()
 end
@@ -213,10 +224,13 @@ end
 
 function QueryUI:show()
 
+    local currentWin=vim.api.nvim_get_current_win()
     self.split:mount()
     self:render()
     local winToFocus
-    if QueryConfig.focusQueryOnRun then
+    if currentWin==self.split.winid then
+        winToFocus=currentWin
+    elseif QueryConfig.focusQueryOnRun then
         winToFocus=self.split.winid
     else
         winToFocus=self.sourceWin

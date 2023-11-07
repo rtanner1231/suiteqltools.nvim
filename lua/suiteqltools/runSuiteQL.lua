@@ -90,18 +90,26 @@ local getQueryText=function()
     return trimmed_text
 end
 
+M.currentPage=1
+M.currentQuery=''
+M.hasMore=false
+
 local runQuery=function(query)
     --local nsAccount=os.getenv('NS_ACCOUNT')
     local nsAccount=os.getenv(Config.options.queryRun.envVars.nsAccount)
 
     nsAccount=string.gsub(nsAccount,'_','-')
     nsAccount=string.lower(nsAccount)
-    local url='https://'..nsAccount..'.suitetalk.api.netsuite.com/services/rest/query/v1/suiteql'
+
+    local pageSize=Config.options.queryRun.pageSize
+    local offset=(M.currentPage-1)*pageSize
+    local url='https://'..nsAccount..'.suitetalk.api.netsuite.com/services/rest/query/v1/suiteql?limit='..pageSize..'&offset='..offset
     local requestBody={q=query}
     local headers={Prefer='transient'}
     local result=NSConn.netsuiteRequest(url,requestBody,headers)
 
     local body=vim.json.decode(result.body)
+    M.hasMore=body.hasMore
 
     if body.items~=nil then
         for _,v in ipairs(body.items) do
@@ -142,7 +150,7 @@ local renderQueryResult=function(queryResult)
     end
 
     --currentQueryUI=QUI.QueryUI:new(queryResult.items)
-    currentQueryUI:setItems(queryResult.items)
+    currentQueryUI:setItems(queryResult.items,M.currentPage)
 
     currentQueryUI:show()
 end
@@ -173,10 +181,34 @@ M.runCurrentQuery=function()
         return
     end
 
-    local q='select top 50 * from ('..fixedQuery..')'
+    --local q='select top 50 * from ('..fixedQuery..')'
+    local q=fixedQuery
+    M.currentQuery=q
+    M.currentPage=1
+
     local result=runQuery(q)
     renderQueryResult(result)
 
+end
+
+M.nextPage=function()
+    if currentQueryUI==nil or currentQueryUI:isValid()==false or M.hasMore==false then
+        return
+    end
+
+    M.currentPage=M.currentPage+1
+    local result=runQuery(M.currentQuery)
+    renderQueryResult(result)
+end
+
+M.prevPage=function()
+    if currentQueryUI==nil or currentQueryUI:isValid()==false or M.currentPage==1 then
+        return
+    end
+
+    M.currentPage=M.currentPage-1
+    local result=runQuery(M.currentQuery)
+    renderQueryResult(result)
 end
 
 M.toggleFullScreen=function()
