@@ -17,7 +17,6 @@ function QueryUI:new()
     self.currentMode=QueryConfig.initialMode
     self.currentJSON=nil
     self.sortDir='ASC'
-    self.page=1
     local initialHeight
     if QueryConfig.openFull then
         initialHeight=QueryConfig.fullHeight
@@ -65,11 +64,6 @@ function QueryUI:getJSON()
 
 end
 
-function QueryUI:_writePageText()
-    local pageStr=tostring(self.page)
-    print('Page: '..pageStr)
-    --vim.api.nvim_buf_set_text(self.split.bufnr,0,0,0,#pageStr,{pageStr})
-end
 
 function QueryUI:render()
     vim.api.nvim_buf_set_option(self.split.bufnr,'modifiable',true)
@@ -83,7 +77,6 @@ function QueryUI:render()
         local json=self:getJSON()
         vim.api.nvim_buf_set_lines(self.split.bufnr,1,1,false,json)
     end
-    self:_writePageText()
     vim.api.nvim_buf_set_option(self.split.bufnr,'modifiable',false)
     vim.api.nvim_buf_set_option(self.split.bufnr,'readonly',true)
 
@@ -104,9 +97,8 @@ function QueryUI:toggleDisplayMode()
     self:render()
 end
 
-function QueryUI:setItems(items,page)
+function QueryUI:setItems(items)
     self.items=items
-    self.page=page
     self.currentJSON=nil
     self.dataTable=self:initTable()
 end

@@ -91,6 +91,7 @@ local getQueryText=function()
 end
 
 M.currentPage=1
+M.total=0
 M.currentQuery=''
 M.hasMore=false
 
@@ -110,6 +111,7 @@ local runQuery=function(query)
 
     local body=vim.json.decode(result.body)
     M.hasMore=body.hasMore
+    M.total=body.totalResults
 
     if body.items~=nil then
         for _,v in ipairs(body.items) do
@@ -153,6 +155,10 @@ local renderQueryResult=function(queryResult)
     currentQueryUI:setItems(queryResult.items,M.currentPage)
 
     currentQueryUI:show()
+
+    local totalPages=math.ceil(M.total/Config.options.queryRun.pageSize)
+
+    print('Page '..M.currentPage..' of '..totalPages )
 end
 
 
