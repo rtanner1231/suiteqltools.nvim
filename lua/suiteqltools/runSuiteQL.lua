@@ -3,6 +3,7 @@ local Common=require('suiteqltools.util.common')
 local Config=require('suiteqltools.config')
 local NSConn=require('suiteqltools.util.nsconn')
 local QUI=require('suiteqltools.queryui')
+local TokenConfig=require('suiteqltools.tokenconfig')
 
 local M={}
 
@@ -97,7 +98,21 @@ M.hasMore=false
 
 local runQuery=function(query)
     --local nsAccount=os.getenv('NS_ACCOUNT')
-    local nsAccount=os.getenv(Config.options.queryRun.envVars.nsAccount)
+
+    if TokenConfig.areTokensSetup()==false then
+        print('Tokens not found.  Use command SuiteQL SetDefaultTokens')
+        return
+    end
+
+    local tokens=TokenConfig.getTokens()
+
+    if tokens==nil then
+        print('error retrieving tokens')
+        return
+    end
+
+    --local nsAccount=os.getenv(Config.options.queryRun.envVars.nsAccount)
+    local nsAccount=tokens.account
 
     nsAccount=string.gsub(nsAccount,'_','-')
     nsAccount=string.lower(nsAccount)
@@ -107,7 +122,7 @@ local runQuery=function(query)
     local url='https://'..nsAccount..'.suitetalk.api.netsuite.com/services/rest/query/v1/suiteql?limit='..pageSize..'&offset='..offset
     local requestBody={q=query}
     local headers={Prefer='transient'}
-    local result=NSConn.netsuiteRequest(url,requestBody,headers)
+    local result=NSConn.netsuiteRequest(url,requestBody,headers,tokens)
 
     local body=vim.json.decode(result.body)
     M.hasMore=body.hasMore
@@ -193,7 +208,9 @@ M.runCurrentQuery=function()
     M.currentPage=1
 
     local result=runQuery(q)
-    renderQueryResult(result)
+    if result~=nil then
+        renderQueryResult(result)
+    end
 
 end
 

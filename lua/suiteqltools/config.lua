@@ -24,11 +24,7 @@ local defaults={
         jsonFormatSpace=4,
         pageSize=10,
         envVars={
-            consumerKey='NS_CONSUMER_KEY',
-            consumerSecret='NS_CONSUMER_SECRET',
-            tokenId='NS_TOKEN',
-            tokenSecret='NS_TOKEN_SECRET',
-            nsAccount='NS_ACCOUNT'
+            encryptKey='NVIMQueryKey',
         }
     }
 }

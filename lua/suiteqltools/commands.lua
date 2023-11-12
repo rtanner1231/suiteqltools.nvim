@@ -1,5 +1,6 @@
 local FormatSuiteQL=require('suiteqltools.formatsuiteql')
 local RunSuiteQL=require('suiteqltools.runSuiteQL')
+local TokenConfig=require('suiteqltools.tokenconfig')
 
 local M={}
 
@@ -13,6 +14,9 @@ M.command_list={
     {value="SortColumn", callback=RunSuiteQL.sortColumn},
     {value="NextPage", callback=RunSuiteQL.nextPage},
     {value="PrevPage", callback=RunSuiteQL.prevPage},
+    {value="SetDefaultTokens", callback=TokenConfig.setDefaultTokens},
+    {value="SetProjectTokens",callback=TokenConfig.setProjectTokens},
+    {value="ResetTokens", callback=TokenConfig.resetTokens}
 }
 
 M.runCommand=function(command)

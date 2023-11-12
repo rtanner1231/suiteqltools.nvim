@@ -107,20 +107,24 @@ local make_request=function(opts,cust_headers)
     return res
 end
 
-M.netsuiteRequest=function(url,body,headers)
+M.netsuiteRequest=function(url,body,headers,tokens)
 
-    local envVars=Config.options.queryRun.envVars
+    --local envVars=Config.options.queryRun.envVars
     -- local tokenSecret=os.getenv('NS_TOKEN_SECRET')
     -- local token=os.getenv('NS_TOKEN')
     -- local consumerKey=os.getenv('NS_CONSUMER_KEY')
     -- local consumerSecret=os.getenv('NS_CONSUMER_SECRET')
     -- local nsAccount=os.getenv('NS_ACCOUNT')
-    local tokenSecret=os.getenv(envVars.tokenSecret)
-    local token=os.getenv(envVars.tokenId)
-    local consumerKey=os.getenv(envVars.consumerKey)
-    local consumerSecret=os.getenv(envVars.consumerSecret)
-    local nsAccount=os.getenv(envVars.nsAccount)
-
+    -- local tokenSecret=os.getenv(envVars.tokenSecret)
+    -- local token=os.getenv(envVars.tokenId)
+    -- local consumerKey=os.getenv(envVars.consumerKey)
+    -- local consumerSecret=os.getenv(envVars.consumerSecret)
+    -- local nsAccount=os.getenv(envVars.nsAccount)
+    local account=tokens.account
+    local token=tokens.token
+    local tokenSecret=tokens.tokenSecret
+    local consumerKey=tokens.consumerKey
+    local consumerSecret=tokens.consumerSecret
 
     return make_request({
         tokenSecret=tokenSecret,
@@ -129,7 +133,7 @@ M.netsuiteRequest=function(url,body,headers)
         consumerSecret=consumerSecret,
         url=url,
         method='POST',
-        account=nsAccount,
+        account=account,
         body=body
 
     },headers)
