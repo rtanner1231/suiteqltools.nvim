@@ -34,18 +34,31 @@ end
 
 
 local getStringInterpolationMatchArray=function(str)
-    local matches=string.gmatch(str,'(${.-})')
-    local i=1
+    -- local matches=string.gmatch(str,'(${.-})')
+    -- local i=1
+    -- local matchArr={}
+    -- local matchSet={}
+    -- for m in matches do
+    --     if matchSet[m]==nil then
+    --         local sub='xxrep4567xx'..i
+    --         table.insert(matchArr,{sub=sub,val=m})
+    --         i=i+1
+    --         matchSet[m]=true
+    --     end
+    -- end
+
+    local strIntVals=Common.getStringInterpolation(str)
     local matchArr={}
-    local matchSet={}
-    for m in matches do
-        if matchSet[m]==nil then
-            local sub='xxrep4567xx'..i
-            table.insert(matchArr,{sub=sub,val=m})
-            i=i+1
-            matchSet[m]=true
-        end
+
+    local i=1
+
+    for _,v in ipairs(strIntVals) do
+        local sub='xxrep4567xx'..i
+        table.insert(matchArr,{sub=sub,val=v})
+        i=i+1
     end
+
+    
 
     return matchArr
 

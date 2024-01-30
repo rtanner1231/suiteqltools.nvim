@@ -27,15 +27,22 @@ local splitReplaceMatches=function(matches)
     local ret={ }
     for _,v in pairs(matches) do
         local splitTbl=Common.splitStr(v,'=')
-        if #splitTbl==2 then
-            table.insert(ret,{replace=splitTbl[1],with=splitTbl[2]})
+        if #splitTbl>1 then
+            local replace=''
+            for i=1,#splitTbl-1 do
+                if replace:len()>0 then
+                    replace=replace..'='
+                end
+                replace=replace..splitTbl[i]
+            end
+            table.insert(ret,{replace=replace,with=splitTbl[#splitTbl]})
         end
     end
     return ret
 end
 
 local getReplaceMatches=function(query)
-    local matchFunc=string.gmatch(query,'%-%-[^%$]*(%${[^}]*}=.-)\n')
+    local matchFunc=string.gmatch(query,'%-%-[^%$]*(%${[^=]*=.-)\n')
     local ret={}
     for v in matchFunc do
         table.insert(ret,v)
@@ -54,20 +61,24 @@ end
 local validateQuery=function(query)
     
 
-    local ret={}
-    local retSet={}
+    -- local ret={}
+    -- local retSet={}
+    --
+    -- local queryToTest=query..'\n'
+    --
+    -- --find any remaining ${...} which do not appear after a -- in a line
+    -- for match in queryToTest:gmatch("[^%$\n]*%${[^}]*}.-\n") do
+    --     if not match:match('%-%-[^%$]*%${[^}]*}') then
+    --         for v in match:gmatch('(%${[^}]*})') do
+    --             if retSet[v]==nil then
+    --                 retSet[v]=true
+    --                 table.insert(ret,v)
+    --             end
+    --         end
+    --     end
+    -- end
+    local ret=Common.getStringInterpolation(query)
 
-    --find any remaining ${...} which do not appear after a -- in a line
-    for match in query:gmatch("[^%$\n]*%${[^}]*}.-\n") do
-        if not match:match('%-%-[^%$]*%${[^}]*}') then
-            for v in match:gmatch('(%${[^}]*})') do
-                if retSet[v]==nil then
-                    retSet[v]=true
-                    table.insert(ret,v)
-                end
-            end
-        end
-    end
     return ret
 end
 
@@ -88,7 +99,7 @@ local getQueryText=function()
     --remove template quotes from start and end
     local trimmed_text=string.sub(sql_text,2,string.len(sql_text)-1)
 
-    return trimmed_text
+    return {node:range()},trimmed_text
 end
 
 M.currentPage=1
@@ -177,10 +188,36 @@ local renderQueryResult=function(queryResult)
 end
 
 
+local addMissingStringInter=function(bufnr,range,values)
+     --get last line in query
+    local lastLineText=vim.fn.getline(range[3]+1)
 
+    local indentedValues={}
+
+    local indent=string.rep(' ',range[2])
+
+    for _,v in ipairs(values) do
+        table.insert(indentedValues,indent..v)
+    end
+
+    --get the rest of the last line in the query
+    local restOfLine=vim.api.nvim_buf_get_text(bufnr,range[3],range[4]-1,range[3],#lastLineText,{})
+    
+    --P({range=range,restOfLine=restOfLine,lastLineText=lastLineText,len=#lastLineText})
+    vim.api.nvim_buf_set_text(bufnr,range[3],range[4]-1,range[3],#lastLineText,{})
+
+
+    local startRow=range[3]+1
+    local endRow=startRow+#values+1
+    table.insert(indentedValues,indent..restOfLine[1])
+
+    --P({startRow=startRow,endRow=endRow,values=indentedValues})
+
+    vim.api.nvim_buf_set_lines(bufnr,startRow,startRow,false,indentedValues)
+end
 
 M.runCurrentQuery=function()
-    local query=getQueryText()
+    local range,query=getQueryText()
 
     if query==nil then
         print('No query under cursor')
@@ -195,10 +232,17 @@ M.runCurrentQuery=function()
 
     if #remainingStringInterpolations>0 then
         local errorString='Add string interpolation comments:\n'
+        local missingstringInter={}
         for _,v in pairs(remainingStringInterpolations) do
-            errorString=errorString..'--'..v..'=<value>\n'
+            local missingValue='--'..v..'='
+            errorString=errorString..missingValue..'<value>'..'\n'
+            table.insert(missingstringInter,missingValue)
         end
         print(errorString)
+        local doAutoAdd=vim.fn.confirm('Autoadd?','&Yes\n&No','&yes')
+        if doAutoAdd==1 then
+            addMissingStringInter(0,range,missingstringInter)
+        end
         return
     end
 
@@ -259,11 +303,22 @@ M.sortColumn=function()
 end
 
 local test=function()
-
-    local query='select * from location'
-    local q='select top 10 * from ('..query..')'
-    local result=runQuery(q)
-    renderQueryResult(result)
+    local q=[[
+        select
+        *
+        from
+        location
+        where
+        name='${name}'
+        and
+        id in (${ids.join(',')})
+        and
+        otherid=${c+1}
+    ]]
+    local a= "select * from location where name='${name}'"
+    --a:gmatch("[^%$\n]*%${[^}]*}.-\n") 
+    local res=validateQuery(q)
+    P(res)
 end
 
 local test2=function()
@@ -329,6 +384,6 @@ end
 
 
 
---test2()
+--test()
 
 return M
