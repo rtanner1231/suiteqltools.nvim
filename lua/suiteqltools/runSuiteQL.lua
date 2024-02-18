@@ -1,9 +1,8 @@
 local TreesitterLookup=require('suiteqltools.util.treesitter_lookup')
 local Common=require('suiteqltools.util.common')
 local Config=require('suiteqltools.config')
-local NSConn=require('suiteqltools.util.nsconn')
 local QUI=require('suiteqltools.queryui')
-local TokenConfig=require('suiteqltools.tokenconfig')
+local RunQuery=require('suiteqltools.runQuery')
 
 local M={}
 
@@ -109,60 +108,30 @@ M.hasMore=false
 
 local runQuery=function(query)
     --local nsAccount=os.getenv('NS_ACCOUNT')
+    
+    local queryResult=RunQuery.runQuery(query,M.currentPage)
 
-    if TokenConfig.areTokensSetup()==false then
-        print('Tokens not found.  Use command SuiteQL SetDefaultTokens')
+    if queryResult==nil then
         return
     end
 
-    local tokens=TokenConfig.getTokens()
+    M.hasMore=queryResult.hasMore
+    M.total=queryResult.total
 
-    if tokens==nil then
-        print('error retrieving tokens')
-        return
-    end
-
-    --local nsAccount=os.getenv(Config.options.queryRun.envVars.nsAccount)
-    local nsAccount=tokens.account
-
-    nsAccount=string.gsub(nsAccount,'_','-')
-    nsAccount=string.lower(nsAccount)
-
-    local pageSize=Config.options.queryRun.pageSize
-    local offset=(M.currentPage-1)*pageSize
-    local url='https://'..nsAccount..'.suitetalk.api.netsuite.com/services/rest/query/v1/suiteql?limit='..pageSize..'&offset='..offset
-    local requestBody={q=query}
-    local headers={Prefer='transient'}
-    local result=NSConn.netsuiteRequest(url,requestBody,headers,tokens)
-
-    local body=vim.json.decode(result.body)
-    M.hasMore=body.hasMore
-    M.total=body.totalResults
-
-    if body.items~=nil then
-        for _,v in ipairs(body.items) do
-            v['links']=nil
-        end
+    if queryResult.success then
         return {
             success=true,
-            items=body.items
+            items=queryResult.items
         }
     else
-        local errorMessage=''
-
-        if body['o:errorDetails'] then
-            for _,v in ipairs(body['o:errorDetails']) do
-                errorMessage=errorMessage..v['detail']
-            end
-        else
-            errorMessage='Unknown error'
-        end
-
         return {
             success=false,
-            errorMessage=errorMessage
+            error=queryResult.errorMessage
         }
     end
+
+
+
 end
 
 local currentQueryUI=nil
