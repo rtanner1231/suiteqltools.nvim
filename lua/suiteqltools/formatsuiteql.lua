@@ -153,6 +153,10 @@ local run_format=function(pos,bufnr)
     end
 end
 
+M.formatQuery=function(q)
+    return doSqlFormat(q,Config.options.sqlFormatter)
+end
+
 M.runFormatCurrent=function()
     local pos=vim.api.nvim_win_get_cursor(0)
     run_format(pos)
@@ -161,6 +165,8 @@ end
 M.runFormatAll=function()
     run_format()
 end
+
+
 
 
 -- vim.api.nvim_create_user_command("TestFormatSuiteQL",function()
