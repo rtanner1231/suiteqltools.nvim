@@ -148,14 +148,18 @@ function QueryEditor:_initKeymaps()
         self:toggleDisplayMode()
     end
 
+    local configKeymap=Config.options.queryRun.editorKeymap
+
+    P(configKeymap)
+
     local keyMap={
-        {key="<C-s>s",fn=doFormat,wins= {self.editorPop}},
-        {key="<C-s>w",fn=toggleWindow,wins = {self.editorPop,self.resultPop} },
-        {key="<C-s>r",fn=runQuery,wins={self.editorPop}},
-        {key="<C-s>f",fn=toggleFullScreen,wins={self.editorPop,self.resultPop}},
-        {key="<C-s>n",fn=nextPage,wins={self.editorPop,self.resultPop}},
-        {key="<C-s>p",fn=previousPage,wins={self.editorPop,self.resultPop}},
-        {key="<C-s>m",fn=toggleDisplayMode,wins={self.editorPop,self.resultPop}},
+        {key=configKeymap.formatQuery,fn=doFormat,wins= {self.editorPop}},
+        {key=configKeymap.toggleWindow,fn=toggleWindow,wins = {self.editorPop,self.resultPop} },
+        {key=configKeymap.runQuery,fn=runQuery,wins={self.editorPop}},
+        {key=configKeymap.toggleResultZoom,fn=toggleFullScreen,wins={self.editorPop,self.resultPop}},
+        {key=configKeymap.nextPage,fn=nextPage,wins={self.editorPop,self.resultPop}},
+        {key=configKeymap.previousPage,fn=previousPage,wins={self.editorPop,self.resultPop}},
+        {key=configKeymap.toggleDisplayMode,fn=toggleDisplayMode,wins={self.editorPop,self.resultPop}},
     }
 
     for _,v in ipairs(keyMap) do

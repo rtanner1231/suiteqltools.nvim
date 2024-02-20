@@ -25,6 +25,15 @@ local defaults={
         pageSize=10,
         envVars={
             encryptKey='NVIMQueryKey',
+        },
+        editorKeymap={
+            formatQuery="<C-s>s",
+            toggleWindow="<C-s>w",
+            runQuery="<C-s>r",
+            toggleResultZoom="<C-s>f",
+            nextPage="<C-s>n",
+            previousPage="<C-s>p",
+            toggleDisplayMode="<C-s>m"
         }
     }
 }
