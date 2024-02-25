@@ -326,6 +326,10 @@ end
 local getQueryText=function()
     local nodes=TreesitterLookup.getCurrentQuery()
 
+    if nodes==nil then
+        return nil
+    end
+
     if #nodes==0 then
         return nil
     end

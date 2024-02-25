@@ -25,7 +25,12 @@ local getSqlNodes=function(pos,bufnr)
 
     local filetype=vim.bo.filetype
 
-    local emb_suiteql=vim.treesitter.query.parse(filetype,'((template_string) @sql (#match? @sql "^`[^a-zA-z0-1]*([wW][iI][tT][hH]|[sS][eE][lL][eE][cC][tT]).*") (#offset! @sql 0 1 0 0))')
+    local res,emb_suiteql=pcall(vim.treesitter.query.parse,filetype,'((template_string) @sql (#match? @sql "^`[^a-zA-z0-1]*([wW][iI][tT][hH]|[sS][eE][lL][eE][cC][tT]).*") (#offset! @sql 0 1 0 0))')
+
+    if res==false then
+        return nil
+    end
+
     local root=get_root(bufnr,filetype)
 
     local nodes={}
