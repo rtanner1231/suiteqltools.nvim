@@ -150,7 +150,7 @@ function QueryEditor:_initKeymaps()
 
     local configKeymap=Config.options.queryRun.editorKeymap
 
-    P(configKeymap)
+    --P(configKeymap)
 
     local keyMap={
         {key=configKeymap.formatQuery,fn=doFormat,wins= {self.editorPop}},
