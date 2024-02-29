@@ -11,6 +11,10 @@ local Commands=require('suiteqltools.commands')
 
 -- end,{})
 
+local startsWith=function(st,query)
+    return st:sub(1,#query)==query
+end
+
 vim.api.nvim_create_user_command("SuiteQL",function(opts)
    if #opts.fargs==0 then
     return
@@ -20,10 +24,13 @@ vim.api.nvim_create_user_command("SuiteQL",function(opts)
 
 end,{
         nargs='?',
-        complete=function(_,_,_)
+        complete=function(a,_,_)
+
             local cList={}
             for _,v in pairs(Commands.command_list) do
-                table.insert(cList,v.value)
+                if a==nil or a=='' or startsWith(v.value,a) then
+                    table.insert(cList,v.value)
+                end
             end
             return cList
         end
