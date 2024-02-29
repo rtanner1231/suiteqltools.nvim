@@ -1,7 +1,11 @@
 local Path=require('plenary.path')
 local File=require('suiteqltools.util.fileutil')
 local Enrypt=require('suiteqltools.util.encrypt')
+local Dialog=require('suiteqltools.util.dialog')
 
+local P=function(tbl)
+    return print(vim.inspect(tbl))
+end
 
 local M={}
 
@@ -20,14 +24,17 @@ local trim=function(s)
     return (s:gsub("^%s*(.-)%s*$", "%1"))
 end
 
----TokenStore: Object
+---Profile
+----profile: string
 ----account: string
 ----token: string
 ----tokenSecret: string
 ----consumerKey: string
 ----consumerSecret: string
-----isDefault?: boolean
-----cwd?: string
+
+---TokenStore: Object
+----activeProfile: string
+----profiles: Profile[]
 
 --Read the contents of the token store file and decript it.
 --returns TokenStore[]
@@ -35,13 +42,13 @@ local getConfigFileContents=function()
     local p=getConfigFilePath()
 
     if not p:exists() then
-        return {}
+        return nil
     end
 
     local contents=p:read()
 
     if #trim(contents)==0 then
-        return {}
+        return nil
     end
 
     --decript
@@ -64,38 +71,23 @@ local writeConfigFile=function(config)
     local encryptedObj=Enrypt.encrypt(jsonStr)
     if encryptedObj.success==true then
         p:write(encryptedObj.result,'w')
-        print(' \nconfig file saved')
+        --print(' \nconfig file saved')
     else
         print(' \nCount not write config: '..encryptedObj.errorMessage)
     end
 end
 
+--Find the profile in the config
+--if found return the profile and index, otherwise return 0,nil
+--
+local findProfile=function(config,profile)
 
---find the default config from the list of configs
---Return the index the config was found at and the found config
---If no config is found, returns 0, nil
---@param config: TokenStore[]
---@returns number, TokenStore
-local findDefault=function(config)
-    for k,v in pairs(config) do
-        if v.isDefault==true then
-            return k,v
-        end
+    if config==nil or config.profiles==nil then
+        return 0,nil
     end
 
-    return 0,nil
-end
-
---find the project config from the list of configs, based on the current cwd
---Return the index the config was found at and the found config
---If no config is found, returns 0, nil
---@param config: TokenStore[]
---@returns number, TokenStore
-local findLocal=function(config)
-    local cwd=vim.fn.getcwd()
-
-    for k,v in pairs(config) do
-        if not v.isDefault and v.cwd==cwd then
+    for k,v in pairs(config.profiles) do
+        if v.profile==profile then
             return k,v
         end
     end
@@ -110,6 +102,11 @@ local getInputs=function()
 
     local nilOrEmpty=function(val)
         return val==nil or val=='' or val==' '
+    end
+
+    local profile=vim.fn.input('Profile Name ')
+    if nilOrEmpty(profile) then
+        return nil
     end
 
     local account=vim.fn.input('Account ')
@@ -133,16 +130,19 @@ local getInputs=function()
         return nil
     end
 
-    return {account=account,
+    return {
+        profile=profile,
+        account=account,
         token=token,
         tokenSecret=tokenSecret,
         consumerKey=consumerKey,
-        consumerSecret=consumerSecret}
+        consumerSecret=consumerSecret
+    }
 end
 
 --prompt the user for tokens
 --either add or update existing tokens
-local setTokens=function(defaultValue,findFunction)
+local setTokens=function()
     local inputs=getInputs()
     if inputs==nil then
         return
@@ -151,25 +151,31 @@ local setTokens=function(defaultValue,findFunction)
     local config=getConfigFileContents()
 
     if config==nil then
-        config={}
+        config={
+            activeProfile= inputs.profile,
+            profiles={}
+        }
     end
 
-    local idx,configObj=findFunction(config)
+    local idx,profileObj=findProfile(config,inputs.profile)
 
-    if configObj==nil then
-        configObj=defaultValue
+    if profileObj==nil then
+        profileObj={}
     end
 
-    configObj.account=inputs.account
-    configObj.token=inputs.token
-    configObj.tokenSecret=inputs.tokenSecret
-    configObj.consumerKey=inputs.consumerKey
-    configObj.consumerSecret=inputs.consumerSecret
+    profileObj.profile=inputs.profile
+    profileObj.account=inputs.account
+    profileObj.token=inputs.token
+    profileObj.tokenSecret=inputs.tokenSecret
+    profileObj.consumerKey=inputs.consumerKey
+    profileObj.consumerSecret=inputs.consumerSecret
+
+
 
     if idx>0 then
-        config[idx]=configObj
+        config.profiles[idx]=profileObj
     else
-        table.insert(config,configObj)
+        table.insert(config.profiles,profileObj)
     end
 
     writeConfigFile(config)
@@ -177,16 +183,32 @@ local setTokens=function(defaultValue,findFunction)
 
 end
 
+local showProfilePicker=function(message,callback)
+    local activeProfile,profileList=M.getProfileList()
 
---Set the default tokens
-M.setDefaultTokens=function()
-    setTokens({isDefault=true},findDefault)
+    if profileList==nil then
+        print('config file not found')
+        return
+    end
+
+    local options={}
+
+    for _,v in ipairs(profileList) do
+        local profileName=v
+        if v==activeProfile then
+            profileName=profileName..' *'
+        end
+        local option={option_text=profileName,value=v}
+        table.insert(options,option)
+    end
+
+    Dialog.option(message,options,callback)
+
 end
 
---set the project specific tokens
-M.setProjectTokens=function()
-    local cwd=vim.fn.getcwd()
-    setTokens({cwd=cwd},findLocal)
+--add a profile to the stored tokens
+M.addProfile=function()
+    setTokens()
 end
 
 --delete the token settings file
@@ -227,17 +249,114 @@ M.getTokens=function()
         return nil
     end
 
-    local _,localConfig=findLocal(config)
-
-    if localConfig~=nil then
-        return fromFoundConfig(localConfig)
+    if config.activeProfile==nil then
+        print('no active profile set')
+        return nil
     end
 
-    local _,defaultConfig=findDefault(config)
-    if defaultConfig~=nil then
-        return fromFoundConfig(defaultConfig)
+    local _,activeConfig=findProfile(config,config.activeProfile)
+
+    if activeConfig~=nil then
+        return fromFoundConfig(activeConfig)
+    else
+        print('Profile '..config.activeProfile..' not found.')
+        return nil
     end
-    return nil
+
+end
+
+M.removeProfile=function(profile)
+
+    if(profile==nil) then
+        return
+    end
+
+    local config=getConfigFileContents()
+
+    if config==nil then
+        print('no config file found')
+        return
+    end
+
+    if profile==config.activeProfile then
+        print('cannot remove active profile')
+        return
+    end
+
+    local idx,_=findProfile(config,profile)
+
+    if idx==0 then
+        print('Profile '..profile..' not found.')
+        return
+    end
+
+    table.remove(config.profiles,idx)
+    writeConfigFile(config)
+
+    print('Profile '..profile..' removed')
+
+end
+
+--Get a list of all profiles
+--returns {string},{string[]} Active profile, profile list
+M.getProfileList=function()
+    local list={}
+
+    local config=getConfigFileContents()
+
+    if config==nil then
+        return nil,nil
+    end
+
+    for _,v in ipairs(config.profiles) do
+        table.insert(list,v.profile)
+    end
+
+    return config.activeProfile,list
+end
+
+--set the active profile
+--if the profile does not exist, does nothing
+M.setActiveProfile=function(profile)
+
+    if profile==nil then
+        return
+    end
+
+    local config=getConfigFileContents()
+
+    if config==nil then
+        print('no config file found')
+        return
+    end
+
+    local _,configObj=findProfile(config,profile)
+
+    if configObj==nil then
+        print('Profile '..profile..' not found.')
+        return
+    end
+
+    config.activeProfile=profile
+
+    writeConfigFile(config)
+end
+
+M.showSelectProfilePicker=function()
+    showProfilePicker('Select profile to use',M.setActiveProfile)
+end
+
+M.showDeleteProfilePicker=function()
+    showProfilePicker('Select profile to delete',M.removeProfile)
+end
+
+M.getActiveProfile=function()
+    local config=getConfigFileContents()
+    if config==nil then
+        return 'No Active Profile'
+    end
+
+    return config.activeProfile
 end
 
 return M

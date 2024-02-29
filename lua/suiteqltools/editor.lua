@@ -8,6 +8,7 @@ local QueryResultBuf=require('suiteqltools.queryResultBuf')
 local RunQuery=require('suiteqltools.runQuery')
 local Config=require('suiteqltools.config')
 local Common=require('suiteqltools.util.common')
+local TokenConfig=require('suiteqltools.tokenconfig')
 
 local P=function(tbl)
     return print(vim.inspect(tbl))
@@ -17,10 +18,10 @@ local M={}
 
 local QueryEditor={}
 
-function QueryEditor:new()
-    local s={}
-    setmetatable(s,self)
-    self.__index=self
+QueryEditor.__index=QueryEditor
+
+function QueryEditor.new()
+    local s=setmetatable({},QueryEditor)
     local editorPop=Popup({
         enter=true,
         border="double",
@@ -59,19 +60,20 @@ function QueryEditor:new()
         },{dir="col"})
     )
 
-    self.editorPop=editorPop
-    self.resultPop=resultPop
-    self.statusBar=statusBar
-    self.layout=layout
-    self.isMounted=false
-    self.isShown=false
-    self.queryResultBuf=QueryResultBuf.QueryResultBuf:new(self.resultPop.bufnr)
-    self.currentPage=1
-    self.hasMore=false
-    self.total=0
-    self.resultIsFullScreen=false
+    s.editorPop=editorPop
+    s.resultPop=resultPop
+    s.statusBar=statusBar
+    s.layout=layout
+    s.isMounted=false
+    s.isShown=false
+    s.queryResultBuf=QueryResultBuf.QueryResultBuf:new(s.resultPop.bufnr)
+    s.currentPage=1
+    s.hasMore=false
+    s.total=0
+    s.resultIsFullScreen=false
+    s.currentStatus=""
 
-    self:_init()
+    s:_init()
     
     return s
 end
@@ -203,6 +205,9 @@ function QueryEditor:show()
 
     self.isShown=true
 
+    self:_setStatusText(self.currentStatus)
+
+    self.currentStatus='test2'
 
 end
 
@@ -224,10 +229,26 @@ function QueryEditor:setEditorText(text)
     vim.api.nvim_buf_set_lines(self.editorPop.bufnr,0,-1,true,text)
 end
 
+function QueryEditor:_formatStatusText(text)
+    local activeProfile=TokenConfig.getActiveProfile()
+
+    local statusWidth=vim.fn.winwidth(self.statusBar.winid)
+
+    local textWidth=#text+#activeProfile
+
+    local spaceWidth=statusWidth-textWidth-2
+
+    local spaces=string.rep(' ',spaceWidth)
+
+    return text..spaces..activeProfile
+end
+
 function QueryEditor:_setStatusText(text)
+    self.currentStatus=text
+    local formattedText=self:_formatStatusText(text)
     vim.api.nvim_buf_set_option(self.statusBar.bufnr,'modifiable',true)
     vim.api.nvim_buf_set_option(self.statusBar.bufnr,'readonly',false)
-    vim.api.nvim_buf_set_lines(self.statusBar.bufnr,0,-1,true,{text})
+    vim.api.nvim_buf_set_lines(self.statusBar.bufnr,0,-1,true,{formattedText})
     vim.api.nvim_buf_set_option(self.statusBar.bufnr,'modifiable',false)
     vim.api.nvim_buf_set_option(self.statusBar.bufnr,'readonly',true)
 end
@@ -354,7 +375,7 @@ local qeInstance=nil
 
 M.toggleQueryEditor=function()
     if qeInstance==nil then
-        qeInstance=QueryEditor:new()
+        qeInstance=QueryEditor.new()
     end
     qeInstance:toggle()
 end
@@ -368,7 +389,7 @@ M.sendCurrentQueryToEditor=function()
     end
     
     if qeInstance==nil then
-        qeInstance=QueryEditor:new()
+        qeInstance=QueryEditor.new()
     end
 
     qeInstance:show()
@@ -376,12 +397,5 @@ M.sendCurrentQueryToEditor=function()
 
 
 end
-
-local function test()
-    M.toggleQueryEditor()
-
-end
-
---test()
 
 return M

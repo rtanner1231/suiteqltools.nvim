@@ -15,8 +15,9 @@ M.command_list={
     {value="SortColumn", callback=RunSuiteQL.sortColumn},
     {value="NextPage", callback=RunSuiteQL.nextPage},
     {value="PrevPage", callback=RunSuiteQL.prevPage},
-    {value="SetDefaultTokens", callback=TokenConfig.setDefaultTokens},
-    {value="SetProjectTokens",callback=TokenConfig.setProjectTokens},
+    {value="AddProfile", callback=TokenConfig.addProfile},
+    {value="SelectProfile",callback=TokenConfig.showSelectProfilePicker},
+    {value="DeleteProfile",callback=TokenConfig.showDeleteProfilePicker},
     {value="ResetTokens", callback=TokenConfig.resetTokens},
     {value="ToggleEditor", callback=QueryEditor.toggleQueryEditor},
     {value="EditQuery", callback=QueryEditor.sendCurrentQueryToEditor}
