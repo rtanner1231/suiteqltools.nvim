@@ -92,14 +92,14 @@ The SQL formatter function uses the [sql-formatter](https://www.npmjs.com/packag
 
 ## Commands
 This plugin provides the below commands
--*:SuiteQL FormatQuery* - Format the SuiteQL query under the cursor.  Does nothing if there is no query under the cursor.
--*:SuiteQL FormatFile* - Formats all SuiteQL queries in the current file.
--*:SuiteQL AddProfile* - Create a new profile for a Netsuite account.  Running this command will prompt you for a profile name and then an account id and Oauth 1.0 tokens for the account.  Using an existing profile name will overwrite that profile.  Multiple profiles may be created.
--*:SuiteQL SelectProfile* - Open a floating window to select the profile which will be used when running SuiteQL queries.  Press the number beside a profile or put the cursor over the profiles line and press enter to select.  Escape to cancel.
--*:SuiteQL DeleteProfile* - Open a floating window to delete a profile.  The active profile may not be deleted.  Press the number beside a profile or put the cursor over the profiles line and press enter to select.  Escape to cancel.
--*:SuiteQL ResetTokens* - Remove all saved profiles.  This cannot be undone.   
--*:SuiteQL ToggleEditor* - Toggles the query editor open and closed.  Closing the query editor preserves the current state and will be restored when it is reopened.
--*:SuiteQL EditQuery* - Open the query editor with the SuiteQL query under the cursor.  Does nothing if there is no query under the cursor.
+- ```:SuiteQL FormatQuery``` - Format the SuiteQL query under the cursor.  Does nothing if there is no query under the cursor.
+- ```:SuiteQL FormatFile``` - Formats all SuiteQL queries in the current file.
+- ```:SuiteQL AddProfile``` - Create a new profile for a Netsuite account.  Running this command will prompt you for a profile name and then an account id and Oauth 1.0 tokens for the account.  Using an existing profile name will overwrite that profile.  Multiple profiles may be created.
+- ```:SuiteQL SelectProfile``` - Open a floating window to select the profile which will be used when running SuiteQL queries.  Press the number beside a profile or put the cursor over the profiles line and press enter to select.  Escape to cancel.
+- ```:SuiteQL DeleteProfile``` - Open a floating window to delete a profile.  The active profile may not be deleted.  Press the number beside a profile or put the cursor over the profiles line and press enter to select.  Escape to cancel.
+- ```:SuiteQL ResetTokens``` - Remove all saved profiles.  This cannot be undone.   
+- ```:SuiteQL ToggleEditor``` - Toggles the query editor open and closed.  Closing the query editor preserves the current state and will be restored when it is reopened.
+- ```:SuiteQL EditQuery``` - Open the query editor with the SuiteQL query under the cursor.  Does nothing if there is no query under the cursor.
 
 ## Setup
 Running SuiteQL queries requires Oauth tokens to be setup and saved.  These tokens will be encrypted and stored in a file called sqc in the vim standard data folder.
