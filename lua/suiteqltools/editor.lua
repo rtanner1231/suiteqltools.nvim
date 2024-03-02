@@ -211,6 +211,12 @@ function QueryEditor:show()
 
 end
 
+--get the winid of the editor
+--@returns {int}
+function QueryEditor:getEditorWindow()
+    return self.editorPop.winid
+end
+
 function QueryEditor:toggle()
     if self.isShown then
         self:_hide()
@@ -394,8 +400,28 @@ M.sendCurrentQueryToEditor=function()
 
     qeInstance:show()
     qeInstance:setEditorText(query)
+end
 
+--return true if the current window is the editor window
+--false otherwise
+--@param {int} winid
+--@returns {boolean}
+M.isWindowEditorWindow=function(winid)
+    if qeInstance==nil then
+        return false
+    end
 
+    local editorWin=qeInstance:getEditorWindow()
+
+    return winid==editorWin
+end
+
+--Format the current query in the editor, if the editor exists
+M.formatEditorQuery=function()
+    if qeInstance==nil then
+        return
+    end
+    qeInstance:formatQuery()
 end
 
 return M

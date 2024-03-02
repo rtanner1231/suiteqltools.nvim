@@ -1,4 +1,4 @@
-local FormatSuiteQL=require('suiteqltools.formatsuiteql')
+local FormatSuiteQL=require('suiteqltools.formatcommands')
 local RunSuiteQL=require('suiteqltools.runSuiteQL')
 local TokenConfig=require('suiteqltools.tokenconfig')
 local QueryEditor=require('suiteqltools.editor')
