@@ -17,6 +17,8 @@ function QueryResult:new(bufnr)
     self.items=nil
     self.currentJSON=nil
     self.sortDir='ASC'
+    self.isError=false
+    self.errorMessage=''
 
     return o
 end
@@ -52,7 +54,12 @@ function QueryResult:render()
     vim.api.nvim_buf_set_option(self.bufnr,'modifiable',true)
     vim.api.nvim_buf_set_option(self.bufnr,'readonly',false)
     self:clear()
-    if self.currentMode=='table' then
+
+    if self.isError then
+        local lines=Common.splitStr(self.errorMessage,"\n")
+        
+        vim.api.nvim_buf_set_lines(self.bufnr,1,1,false,lines)
+    elseif self.currentMode=='table' then
             self.dataTable:render()
         vim.api.nvim_buf_set_option(self.bufnr,'readonly',false)
         vim.api.nvim_buf_set_option(self.bufnr,'modifiable',true)
@@ -79,6 +86,8 @@ function QueryResult:toggleDisplayMode()
 end
 
 function QueryResult:setItems(items)
+    self.isError=false
+    self.errorMessage=''
     self.items=items
     self.currentJSON=nil
     self.dataTable=self:initTable()
@@ -161,6 +170,12 @@ function QueryResult:sort()
             self:_doSort(column.accessor_key)
         end
     end
+end
+
+function QueryResult:setError(errorMessage)
+    self.isError=true
+    self.errorMessage=errorMessage
+    self:render()
 end
 
 

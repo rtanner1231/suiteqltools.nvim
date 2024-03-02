@@ -281,7 +281,8 @@ function QueryEditor:_doRunQuery()
     self.hasMore=queryResult.hasMore
     self.total=queryResult.total
     if queryResult.success==false then
-        print(queryResult.errorMessage)
+        self.queryResultBuf:setError(queryResult.errorMessage)
+        self:_setStatusText('Error')
         return
     end
 
