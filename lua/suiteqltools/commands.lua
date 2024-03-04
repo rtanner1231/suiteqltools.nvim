@@ -2,6 +2,7 @@ local FormatSuiteQL=require('suiteqltools.formatcommands')
 local RunSuiteQL=require('suiteqltools.runSuiteQL')
 local TokenConfig=require('suiteqltools.tokenconfig')
 local QueryEditor=require('suiteqltools.editor')
+local HistoryPicker=require('suiteqltools.historyPicker')
 
 local M={}
 
@@ -20,7 +21,8 @@ M.command_list={
     {value="DeleteProfile",callback=TokenConfig.showDeleteProfilePicker},
     {value="ResetTokens", callback=TokenConfig.resetTokens},
     {value="ToggleEditor", callback=QueryEditor.toggleQueryEditor},
-    {value="EditQuery", callback=QueryEditor.sendCurrentQueryToEditor}
+    {value="EditQuery", callback=QueryEditor.sendCurrentQueryToEditor},
+    {value="History", callback=HistoryPicker.showHistoryPicker}
 }
 
 M.runCommand=function(command)

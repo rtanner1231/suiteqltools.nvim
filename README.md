@@ -14,6 +14,7 @@
 - Node.js
 - Treesitter with sql installed
 - A Netsuite environment with SuiteTalk Rest Web Services enabled (for Run Query functionality)
+- Optional: [telescope.nvim](https://github.com/nvim-telescope/telescope.nvim)
 
 ## Installation
 Install with your preferred package manager.  Optionally call a setup function to override default options.
@@ -65,7 +66,9 @@ return {
             nextPage="<C-s>n",
             previousPage="<C-s>p",
             toggleDisplayMode="<C-s>m"
-        }
+        },
+        history=false,
+        historyLimit=2000
     }
 }
 ```
@@ -89,6 +92,8 @@ The SQL formatter function uses the [sql-formatter](https://www.npmjs.com/packag
   - **nextPage** (*default: "\<C-s\>n"*) - Keymap to move to the next result page.
   - **previousPage** (*default: "\<C-s\>p"*) - Keymap to move to the previous result page.
   - **toggleDisplayMode** (*default: "\<C-s\>m*) - Keymap to toggle query results between table and json formats.
+- **history** (*default: false*) - Enable or disable the history functionality.
+- **historyLimit** (*default: 2000*) - The maximum number of queries to keep in the history.
 
 ## Commands
 This plugin provides the below commands
@@ -100,6 +105,7 @@ This plugin provides the below commands
 - ```:SuiteQL ResetTokens``` - Remove all saved profiles.  This cannot be undone.   
 - ```:SuiteQL ToggleEditor``` - Toggles the query editor open and closed.  Closing the query editor preserves the current state and will be restored when it is reopened.
 - ```:SuiteQL EditQuery``` - Open the query editor with the SuiteQL query under the cursor.  Does nothing if there is no query under the cursor.
+- ```:SuiteQL History``` - Opens the a [Telescope](https://github.com/nvim-telescope/telescope.nvim) picker for searching query history.  Does nothing is history configuration option is false.
 
 ## Setup
 Running SuiteQL queries requires Oauth tokens to be setup and saved.  These tokens will be encrypted and stored in a file called sqc in the vim standard data folder.
@@ -197,6 +203,15 @@ The query editor consists of three sections: the editor pane, the results pane, 
 *Running queries using the suitetalk rest service which has the following quirks:*
 - Any columns with null in every row is not returned
 - Columns may be returned in a different order then the query specifies.
+
+### History
+Tracking query history can optionally be enabled (See Configuration Options).  Requires [telescope.nvim](https://github.com/nvim-telescope/telescope.nvim) 
+- Successful queries will be saved in history.
+- Query history can be viewed using the ```:SuiteQL History``` command.  Queries may be searched using the search bar.  Press enter on a query to open it in the query editor.
+- Queries are stored in the neovim data directory in a file called suiteqlhistory.json.  This file can be removed to clear the history.
+
+Demo: Search query history, open selected query in editor, run query.
+![suiteqlhistory](https://github.com/rtanner1231/suiteqltools.nvim/assets/142627958/19b83c42-9e06-42e7-bfc0-0c76904c4da6)
 
 ## A note on security
 Oauth tokens are encrypted and stored in the neovim Data Directory (see ```:h standard-path``` in Neovim) in a file called **sqc**.  The encryption key used is retrived from the environmental variable *NVIMQueryKey*.  The name of this environmental variable can be changed in the configuration.

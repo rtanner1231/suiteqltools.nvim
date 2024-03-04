@@ -2,6 +2,7 @@ local Path=require('plenary.path')
 local File=require('suiteqltools.util.fileutil')
 local Enrypt=require('suiteqltools.util.encrypt')
 local Dialog=require('suiteqltools.util.dialog')
+local Common=require('suiteqltools.util.common')
 
 local P=function(tbl)
     return print(vim.inspect(tbl))
@@ -17,11 +18,6 @@ local getConfigFilePath=function()
     local fname='sqc'
 
     return Path:new(File.pathcombine(basePath,fname))
-end
-
---trim whitespace at the start and end of the passed in string
-local trim=function(s)
-    return (s:gsub("^%s*(.-)%s*$", "%1"))
 end
 
 ---Profile
@@ -47,7 +43,7 @@ local getConfigFileContents=function()
 
     local contents=p:read()
 
-    if #trim(contents)==0 then
+    if #Common.trim(contents)==0 then
         return nil
     end
 

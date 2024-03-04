@@ -79,6 +79,11 @@ M.getStringInterpolation=function(q)
     
 end
 
+--trim whitespace at the start and end of the passed in string
+M.trim=function(s)
+    return (s:gsub("^%s*(.-)%s*$", "%1"))
+end
+
 local test=function()
 
     local q=[[

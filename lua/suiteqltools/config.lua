@@ -34,7 +34,9 @@ local defaults={
             nextPage="<C-s>n",
             previousPage="<C-s>p",
             toggleDisplayMode="<C-s>m"
-        }
+        },
+        history=false,
+        historyLimit=2000
     }
 }
 

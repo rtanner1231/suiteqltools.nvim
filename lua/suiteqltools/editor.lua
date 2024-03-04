@@ -9,6 +9,7 @@ local RunQuery=require('suiteqltools.runQuery')
 local Config=require('suiteqltools.config')
 local Common=require('suiteqltools.util.common')
 local TokenConfig=require('suiteqltools.tokenconfig')
+local History=require('suiteqltools.history')
 
 local P=function(tbl)
     return print(vim.inspect(tbl))
@@ -207,8 +208,6 @@ function QueryEditor:show()
 
     self:_setStatusText(self.currentStatus)
 
-    self.currentStatus='test2'
-
 end
 
 --get the winid of the editor
@@ -296,6 +295,8 @@ function QueryEditor:_doRunQuery()
 
         self:_setStatusText('Page '..self.currentPage..' of '..totalPages)
     end
+
+    History.addToHistory(qText)
 end
 
 function QueryEditor:runQuery()
@@ -380,11 +381,23 @@ end
 
 local qeInstance=nil
 
+local openQueryWithQueryTable=function(queryTable)
+    if qeInstance==nil then
+        qeInstance=QueryEditor.new()
+    end
+    qeInstance:show()
+    qeInstance:setEditorText(queryTable)
+end
 M.toggleQueryEditor=function()
     if qeInstance==nil then
         qeInstance=QueryEditor.new()
     end
     qeInstance:toggle()
+end
+
+M.openEditorWithQuery=function(query)
+    local queryTable=Common.splitStr(query,"\n")
+    openQueryWithQueryTable(queryTable)
 end
 
 M.sendCurrentQueryToEditor=function()
@@ -394,14 +407,10 @@ M.sendCurrentQueryToEditor=function()
         print('no query under cursor')
         return
     end
-    
-    if qeInstance==nil then
-        qeInstance=QueryEditor.new()
-    end
 
-    qeInstance:show()
-    qeInstance:setEditorText(query)
+    openQueryWithQueryTable(query)
 end
+
 
 --return true if the current window is the editor window
 --false otherwise
