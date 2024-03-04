@@ -16,7 +16,7 @@ local defaults={
     },
     queryRun={
         enabled=true,
-        initialHeight="20%",
+       initialHeight="20%",
         fullHeight="100%",
         openFull=false,
         focusQueryOnRun=false,
@@ -36,7 +36,8 @@ local defaults={
             toggleDisplayMode="<C-s>m"
         },
         history=false,
-        historyLimit=2000
+        historyLimit=2000,
+        timeout=50000
     }
 }
 

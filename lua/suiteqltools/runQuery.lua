@@ -27,11 +27,12 @@ M.runQuery=function(query,page)
     nsAccount=string.lower(nsAccount)
 
     local pageSize=Config.options.queryRun.pageSize
+    local timeout=Config.options.queryRun.timeout
     local offset=(page-1)*pageSize
     local url='https://'..nsAccount..'.suitetalk.api.netsuite.com/services/rest/query/v1/suiteql?limit='..pageSize..'&offset='..offset
     local requestBody={q=query}
     local headers={Prefer='transient'}
-    local success,result=NSConn.netsuiteRequest(url,requestBody,headers,tokens)
+    local success,result=NSConn.netsuiteRequest(url,requestBody,headers,tokens,timeout)
 
     if not success then
 

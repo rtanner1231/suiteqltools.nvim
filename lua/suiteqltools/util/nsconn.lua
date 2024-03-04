@@ -91,6 +91,7 @@ end
 --method
 --account
 --body: table
+--timeout
 local make_request=function(opts,cust_headers)
 
     local body=vim.json.encode(opts.body)
@@ -107,14 +108,15 @@ local make_request=function(opts,cust_headers)
     local success, res = pcall(function()
         return curllib.post(opts.url, {
             headers = headers,
-            body = body
+            body = body,
+            timeout = opts.timeout
         })
     end)
 
     return success,res
 end
 
-M.netsuiteRequest=function(url,body,headers,tokens)
+M.netsuiteRequest=function(url,body,headers,tokens,timeout)
 
     --local envVars=Config.options.queryRun.envVars
     -- local tokenSecret=os.getenv('NS_TOKEN_SECRET')
@@ -141,7 +143,8 @@ M.netsuiteRequest=function(url,body,headers,tokens)
         url=url,
         method='POST',
         account=account,
-        body=body
+        body=body,
+        timeout=timeout
 
     },headers)
 end

@@ -68,7 +68,8 @@ return {
             toggleDisplayMode="<C-s>m"
         },
         history=false,
-        historyLimit=2000
+        historyLimit=2000,
+        timeout=50000
     }
 }
 ```
@@ -94,6 +95,7 @@ The SQL formatter function uses the [sql-formatter](https://www.npmjs.com/packag
   - **toggleDisplayMode** (*default: "\<C-s\>m*) - Keymap to toggle query results between table and json formats.
 - **history** (*default: false*) - Enable or disable the history functionality.
 - **historyLimit** (*default: 2000*) - The maximum number of queries to keep in the history.
+- **timeout** (*default: 50000*) - The timeout in milliseconds to wait for a response from a Netsuite REST API call.
 
 ## Commands
 This plugin provides the below commands
