@@ -347,6 +347,11 @@ function QueryEditor:previousPage()
     end
 end
 
+function QueryEditor:clearResults()
+    self:_setStatusText('')
+    self.queryResultBuf:clearResults()
+end
+
 --toggle between showing a table and json
 function QueryEditor:toggleDisplayMode()
     self.queryResultBuf:toggleDisplayMode()
@@ -385,9 +390,11 @@ local openQueryWithQueryTable=function(queryTable)
     if qeInstance==nil then
         qeInstance=QueryEditor.new()
     end
+    qeInstance:clearResults()
     qeInstance:show()
     qeInstance:setEditorText(queryTable)
 end
+
 M.toggleQueryEditor=function()
     if qeInstance==nil then
         qeInstance=QueryEditor.new()

@@ -53,7 +53,7 @@ end
 function QueryResult:render()
     vim.api.nvim_buf_set_option(self.bufnr,'modifiable',true)
     vim.api.nvim_buf_set_option(self.bufnr,'readonly',false)
-    self:clear()
+    self:_clear()
 
     if self.isError then
         local lines=Common.splitStr(self.errorMessage,"\n")
@@ -120,8 +120,16 @@ function QueryResult:initTable()
     })
 end
 
-function QueryResult:clear()
+function QueryResult:_clear()
     vim.api.nvim_buf_set_lines(self.bufnr,0,-1,false,{''})
+end
+
+function QueryResult:clearResults()
+    vim.api.nvim_buf_set_option(self.bufnr,'modifiable',true)
+    vim.api.nvim_buf_set_option(self.bufnr,'readonly',false)
+    self:_clear()
+    vim.api.nvim_buf_set_option(self.bufnr,'modifiable',false)
+    vim.api.nvim_buf_set_option(self.bufnr,'readonly',true)
 end
 
 function QueryResult:_doSort(col)
