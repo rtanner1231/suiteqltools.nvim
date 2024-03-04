@@ -3,12 +3,12 @@
 
 <img src="https://github.com/rtanner1231/suiteqltools.nvim/assets/142627958/def6e5c5-30a5-46d3-8c3d-eb4a65baa94c" width="90%" />
 
-## Main Features
+# Main Features
 - Syntax highlighting for SuiteQL queries
 - Format SuiteQL queries in code
 - SQL editor to run queries against a Netsuite instance
 
-## Requirements
+# Requirements
 - [nui.nvim](https://github.com/MunifTanjim/nui.nvim)
 - [plenary.nvim](https://github.com/nvim-lua/plenary.nvim)
 - Node.js
@@ -16,10 +16,10 @@
 - A Netsuite environment with SuiteTalk Rest Web Services enabled (for Run Query functionality)
 - Optional: [telescope.nvim](https://github.com/nvim-telescope/telescope.nvim)
 
-## Installation
+# Installation
 Install with your preferred package manager.  Optionally call a setup function to override default options.
 
-### [lazy.nvim](https://github.com/folke/lazy.nvim)
+## [lazy.nvim](https://github.com/folke/lazy.nvim)
 
 ```lua
 return {
@@ -34,9 +34,9 @@ return {
 }
 ```
 
-## Configuration Options
+# Configuration Options
 
-### Defaults
+## Defaults
 
 ```lua
 {
@@ -74,11 +74,11 @@ return {
 }
 ```
 
-### Sql Formatter options
+## Sql Formatter options
 
 The SQL formatter function uses the [sql-formatter](https://www.npmjs.com/package/sql-formatter) library.  Refer to the documentation there for information about the individual options.
 
-### Query Run options
+## Query Run options
 
 - **initialMode** (*default: "table"*) - The type of output running a query will initially produce.  "table" will show the results in a table.  "json" will show the raw JSON structure of the results.
 - **jsonFormatSpace** (*default: 4*) - The number of spaces to indent the JSON output of the query
@@ -97,7 +97,7 @@ The SQL formatter function uses the [sql-formatter](https://www.npmjs.com/packag
 - **historyLimit** (*default: 2000*) - The maximum number of queries to keep in the history.
 - **timeout** (*default: 50000*) - The timeout in milliseconds to wait for a response from a Netsuite REST API call.
 
-## Commands
+# Commands
 This plugin provides the below commands
 - ```:SuiteQL FormatQuery``` - Format the SuiteQL query under the cursor.  Does nothing if there is no query under the cursor.
 - ```:SuiteQL FormatFile``` - Formats all SuiteQL queries in the current file.
@@ -109,23 +109,23 @@ This plugin provides the below commands
 - ```:SuiteQL EditQuery``` - Open the query editor with the SuiteQL query under the cursor.  Does nothing if there is no query under the cursor.
 - ```:SuiteQL History``` - Opens the a [Telescope](https://github.com/nvim-telescope/telescope.nvim) picker for searching query history.  Does nothing is history configuration option is false.
 
-## Setup
+# Setup
 Running SuiteQL queries requires Oauth tokens to be setup and saved.  These tokens will be encrypted and stored in a file called sqc in the vim standard data folder.
 
 1. Set an encryption key.  Create an environmental variable called NVIMQueryKey (or what you set queryRun.envVars.encryptKey to in the config).  For example add ```export NVIMQueryKey=ABCDEF12345``` to your .bashrc file to set ABCDEF12345 as the encryption key.
 2. Generate oauth tokens in your Netsuite environments.  These tokens will need to be created with a role that has at least view access to any table you would like to write queries for.  **Never use tokens created from a production environment with this plugin**
 3. Run ```:SuiteQL AddProfile``` in Neovim.  Follow the prompts to create a profile for a Netsuite account and assign OAuth tokens to it.
 
-## Usage
+# Usage
 
-### How queries in code are identified
+## How queries in code are identified
 
 In order for a string to be considered a SuiteQL query by this plugin, it must be the following:
 1. In a javascript or typescript file.
 2. Enclosed in backticks (a string literal)
 3. Have the first word be "select" or "with" (Case insensitive)
 
-#### Examples
+### Examples
 ${\textsf{\color{lightgreen}This would be considered a SuiteQL query}}$
 
 ```
@@ -157,11 +157,11 @@ const q=`
 `
 ```
 
-### Syntax highlighting
+## Syntax highlighting
 
 Any string which satisfies the above rules to be considered a SuiteQL query will automatically have syntax highlighting applied.
 
-### Formatting
+## Formatting
 
 A SuiteQL query may be formatted by using commands ```:SuiteQL FormatQuery``` to format the query under the cursor or ```:SuiteQL FormatFile``` to format all SuiteQL queries in the file.
 
@@ -176,7 +176,7 @@ This uses the [sql-formatter](https://www.npmjs.com/package/sql-formatter) libra
 - denseOperators
 - newLineBeforeSemicolon
 
-### Managing profiles
+## Managing profiles
 
 To run queries against a Netsuite environment, a profile must be set up for that environment.  A profile contains the Netsuite account number and OAuth tokens for connecting.  Multiple profiles may be set up but only one may be the active profile at a time.  Queries are run against the active profile.
 - Use ```:SuiteQL AddProfile``` to create a profile.  Follow the prompts to enter a profile name, Netsuite account number, and Oauth token information.  If the profile name already exists, it will be overwritten.  The first profile created will automatically be set as the active profile.
@@ -184,7 +184,7 @@ To run queries against a Netsuite environment, a profile must be set up for that
 - Delete a profile with the ```:SuiteQL DeleteProfile``` command.  This will show a floating window with all profiles lists.  The current active profile will have a star next to its name.  Placing the cursor over a line and pressing enter or pressing the number next to a profile will delete the profile.  The active profile may not be deleted.  Press escape to cancel.
 - Remove all profiles with the ```:SuiteQL ResetTokens``` command.  This will delete all saved data for this plugin.
 
-### Edit and Run Query
+## Edit and Run Query
 
 The query edit may be opened with the following commands
 - ```:SuiteQL ToggleEditor``` - Opens the editor.  If the editor had previously been open, opens to the most recent state.
@@ -206,7 +206,7 @@ The query editor consists of three sections: the editor pane, the results pane, 
 - Any columns with null in every row is not returned
 - Columns may be returned in a different order then the query specifies.
 
-### History
+## History
 Tracking query history can optionally be enabled (See Configuration Options).  Requires [telescope.nvim](https://github.com/nvim-telescope/telescope.nvim) 
 - Successful queries will be saved in history.
 - Query history can be viewed using the ```:SuiteQL History``` command.  Queries may be searched using the search bar.  Press enter on a query to open it in the query editor.
@@ -215,7 +215,7 @@ Tracking query history can optionally be enabled (See Configuration Options).  R
 Demo: Search query history, open selected query in editor, run query.
 ![suiteqlhistory](https://github.com/rtanner1231/suiteqltools.nvim/assets/142627958/19b83c42-9e06-42e7-bfc0-0c76904c4da6)
 
-## A note on security
+# A note on security
 Oauth tokens are encrypted and stored in the neovim Data Directory (see ```:h standard-path``` in Neovim) in a file called **sqc**.  The encryption key used is retrived from the environmental variable *NVIMQueryKey*.  The name of this environmental variable can be changed in the configuration.
 
 **This method is not fully secure and anyone with access to your system and knowledge of this plugin could easily retrieve the Oauth tokens.  Never enter tokens from a production environment.**
