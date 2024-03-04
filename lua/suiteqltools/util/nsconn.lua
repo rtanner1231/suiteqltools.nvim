@@ -99,12 +99,19 @@ local make_request=function(opts,cust_headers)
 
     headers=vim.tbl_deep_extend('force',headers,cust_headers)
 
-    local res=curllib.post(opts.url,{
-        headers=headers,
-        body=body
-    })
+    -- local res=curllib.post(opts.url,{
+    --     headers=headers,
+    --     body=body
+    -- })
 
-    return res
+    local success, res = pcall(function()
+        return curllib.post(opts.url, {
+            headers = headers,
+            body = body
+        })
+    end)
+
+    return success,res
 end
 
 M.netsuiteRequest=function(url,body,headers,tokens)

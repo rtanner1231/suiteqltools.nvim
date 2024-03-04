@@ -1,6 +1,7 @@
 local TokenConfig=require('suiteqltools.tokenconfig')
 local Config=require('suiteqltools.config')
 local NSConn=require('suiteqltools.util.nsconn')
+local Common=require('suiteqltools.util.common')
 
 local M={}
 
@@ -30,7 +31,24 @@ M.runQuery=function(query,page)
     local url='https://'..nsAccount..'.suitetalk.api.netsuite.com/services/rest/query/v1/suiteql?limit='..pageSize..'&offset='..offset
     local requestBody={q=query}
     local headers={Prefer='transient'}
-    local result=NSConn.netsuiteRequest(url,requestBody,headers,tokens)
+    local success,result=NSConn.netsuiteRequest(url,requestBody,headers,tokens)
+
+    if not success then
+
+        local errorMessage=result
+
+        --timeout is a common error.  Capture it
+        if Common.stringContains(result,'was unable to complete in') then
+            errorMessage='Query timed out'
+        end
+
+        return {
+            success=false,
+            errorMessage=errorMessage,
+            hasMore=false,
+            total=0
+        }
+    end
 
     local body=vim.json.decode(result.body)
     local hasMore=body.hasMore

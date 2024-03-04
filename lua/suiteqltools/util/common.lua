@@ -109,6 +109,10 @@ local test=function()
      print(vim.inspect(res))
 end
 
+M.stringContains=function(mainString, subString)
+    return mainString:find(subString, 1, true) ~= nil
+end
+
 --test()
 
 return M
