@@ -15,6 +15,7 @@
 - Treesitter with sql installed
 - A Netsuite environment with SuiteTalk Rest Web Services enabled (for Run Query functionality)
 - Optional: [telescope.nvim](https://github.com/nvim-telescope/telescope.nvim)
+- Optional: [nvim-cmp](https://github.com/hrsh7th/nvim-cmp) (For autocomplete)
 
 # Installation
 Install with your preferred package manager.  Optionally call a setup function to override default options.
@@ -69,7 +70,8 @@ return {
         },
         history=false,
         historyLimit=2000,
-        timeout=50000
+        timeout=50000,
+        completion=false
     }
 }
 ```
@@ -96,6 +98,7 @@ The SQL formatter function uses the [sql-formatter](https://www.npmjs.com/packag
 - **history** (*default: false*) - Enable or disable the history functionality.
 - **historyLimit** (*default: 2000*) - The maximum number of queries to keep in the history.
 - **timeout** (*default: 50000*) - The timeout in milliseconds to wait for a response from a Netsuite REST API call.
+- **completion** (*default: false*) - Set to true to enable the completion feature in the query editor.
 
 # Commands
 This plugin provides the below commands
@@ -108,6 +111,7 @@ This plugin provides the below commands
 - ```:SuiteQL ToggleEditor``` - Toggles the query editor open and closed.  Closing the query editor preserves the current state and will be restored when it is reopened.
 - ```:SuiteQL EditQuery``` - Open the query editor with the SuiteQL query under the cursor.  Does nothing if there is no query under the cursor.
 - ```:SuiteQL History``` - Opens the a [Telescope](https://github.com/nvim-telescope/telescope.nvim) picker for searching query history.  Does nothing is history configuration option is false.
+- ```:SuiteQL SetCompletionData``` - Open a dialog to import completion data for the current active profile.  Does nothing if the completion feature is not enabled.
 
 # Setup
 Running SuiteQL queries requires Oauth tokens to be setup and saved.  These tokens will be encrypted and stored in a file called sqc in the vim standard data folder.
@@ -214,6 +218,28 @@ Tracking query history can optionally be enabled (See Configuration Options).  R
 
 Demo: Search query history, open selected query in editor, run query.
 ![suiteqlhistory](https://github.com/rtanner1231/suiteqltools.nvim/assets/142627958/19b83c42-9e06-42e7-bfc0-0c76904c4da6)
+
+# Completion
+*Note: this feature is experimental*
+![autocomplete](https://github.com/rtanner1231/suiteqltools.nvim/assets/142627958/60916e7d-3922-449d-b200-0ae2aef35435)
+
+This feature enables offline autocomplete for tables and fields in the query editor.
+## Setup
+- Ensure you have the [nvim-cmp](https://github.com/hrsh7th/nvim-cmp) plugin installed.
+- Set the **completion** property to true in the plugin configuration.
+- You will need to extract the table and field data from your Netsuite environment.  Download the file located at *netsuitescripts/loadcompletion.html* in this repository. Load this file into your Netsuite filecabinet and open it.  Press the Run button to begin the extraction process.  Once complete, copy the value in the Results field into to the clipboard.  More information about how this works can be found in [this](https://timdietrich.me/blog/netsuite-records-catalog-api/) blog post.
+<img src="https://github.com/rtanner1231/suiteqltools.nvim/assets/142627958/c291bd30-d5ad-4ecb-8594-437ee2d19a3f" width="70%" />
+
+- Next load the table and field data into Neovim.  Ensure the active profile is the one which corresponds to environment the data was downloaded from (run ```:SuiteQL SelectProfile``` to change if needed).  Run ```:SuiteQL SetCompletionData```.  In the dialog that appears, paste the results of the SuiteQL Completion Data tool and press enter.
+- Repeat for any other profiles.
+- Completion should now be active.
+
+## Usage
+- Table completion will trigger after the string *"from"* and *"join"* followed by whitespace (Case insensitive).  *Note: There is currently an issue where the table completion will not trigger at the beginning of a line, even if from or join preceded it line above.  In this case, adding a space at the start of the line should make it trigger.*
+- Field completion will trigger after a . (period).  Completion without a table or alias is not currently supported.  *Note: The query must be reletively well formed to be able to resolve the tables and aliases.  If the tables and aliases are unable to be resolved, the completion will not trigger* 
+
+
+
 
 # A note on security
 Oauth tokens are encrypted and stored in the neovim Data Directory (see ```:h standard-path``` in Neovim) in a file called **sqc**.  The encryption key used is retrived from the environmental variable *NVIMQueryKey*.  The name of this environmental variable can be changed in the configuration.

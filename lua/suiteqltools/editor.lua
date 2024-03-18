@@ -10,6 +10,7 @@ local Config=require('suiteqltools.config')
 local Common=require('suiteqltools.util.common')
 local TokenConfig=require('suiteqltools.tokenconfig')
 local History=require('suiteqltools.history')
+local CompletionSource=require('suiteqltools.completion.suiteQLSource')
 
 local P=function(tbl)
     return print(vim.inspect(tbl))
@@ -86,6 +87,11 @@ function QueryEditor:_init()
 
     self:_initKeymaps()
 
+    self:_initCompletion()
+end
+
+function QueryEditor:_initCompletion()
+    CompletionSource.register(self.editorPop.bufnr)
 end
 
 function QueryEditor:_initAutoCmds()
@@ -194,6 +200,9 @@ end
 function QueryEditor:_hide()
     self.layout:hide()
     self.isShown=false
+    if vim.bo[self.editorPop.bufnr] and vim.bo[self.editorPop.bufnr].buflisted then
+        vim.bo[self.editorPop.bufnr].buflisted=false
+    end
 end
 
 function QueryEditor:show()

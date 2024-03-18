@@ -37,7 +37,8 @@ local defaults={
         },
         history=false,
         historyLimit=2000,
-        timeout=50000
+        timeout=50000,
+        completion=false
     }
 }
 

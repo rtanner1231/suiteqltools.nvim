@@ -84,6 +84,11 @@ M.trim=function(s)
     return (s:gsub("^%s*(.-)%s*$", "%1"))
 end
 
+--trim whitepace at the end of the string
+M.rTrim=function(s)
+    return s:match( "^(.-)%s*$" )
+end
+
 local test=function()
 
     local q=[[

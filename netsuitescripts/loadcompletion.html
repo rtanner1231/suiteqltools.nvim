@@ -1,0 +1,254 @@
+<html>
+<head>
+
+<script language="javascript">
+    const endpoint='/app/recordscatalog/rcendpoint.nl'
+
+    async function runRequest(action,data){
+        try{
+        const url = endpoint + '?action=' + action + '&data=' + data;
+        const response=await fetch(url)
+        if(!response.ok){
+            return {
+                    success: false
+                }
+        }
+        const result=await response.json()
+        return {
+            success: true,
+            result
+        }
+        } catch(e){
+            return {
+                success: false
+            }
+        }
+
+    }
+
+    let currentIterTotal=0
+    let currentIterNum=0
+    let currentStage=''
+
+    function renderStatus(){
+       
+
+        const percent=currentIterTotal==0?0:`${Math.round(currentIterNum/currentIterTotal*100)}%`
+
+        const elem = document.getElementById("myBar");
+
+        elem.style.width = percent;
+        elem.innerHTML = percent;
+        
+        document.getElementById('status').innerHTML = currentStage
+    }
+
+    function setIterTotal(total){
+        currentIterTotal=total
+        currentIterNum=0
+    }
+
+    function incIterNum(){
+        currentIterNum++
+        renderStatus()
+    }
+
+    function setCurrentIter(stage,total){
+        setIterTotal(total)
+        currentStage=stage
+        renderStatus()
+    }
+
+    async function loadTables(){
+        const action='getRecordTypes'
+        const data = encodeURI( JSON.stringify( { structureType: 'FLAT' } ) );
+        const {success,result}=await runRequest(action,data)
+
+        return result.data.map(t=>t.id.toLowerCase())
+    }
+    
+    function getJoinTable(joinid){
+        const joinidParts=joinid.split('^')
+        return joinidParts[joinidParts.length-1].split('<')[0].split('>')[0].toLowerCase()
+    }
+
+    async function loadTableFields(table){
+        const action='getRecordTypeDetail'
+        const data = encodeURI( JSON.stringify( { scriptId: table, detailType: 'ss_anal' } ) );
+        const {success,result}=await runRequest(action,data)
+        if(!success){
+            return {success:false};
+        }
+        const fieldsdata=result.data
+        const fields=fieldsdata.fields.map(f=>f.id.toLowerCase())
+
+        const joins=fieldsdata.joins.map(j=>j.sourceTargetType.id.toLowerCase())
+
+        return {
+            success:true,
+            fields,
+            joins
+        }
+
+    }
+
+    async function runTables(tables,tablesSet){
+        const tableFields={}
+        const joinedTables=[]
+        await Promise.all(tables.map(async (t)=>{
+            const {success,fields,joins}=await loadTableFields(t)
+            incIterNum()
+            if(success){
+                tableFields[t]=fields
+                joins.filter(f=>!tablesSet.has(f)).forEach(f=>{
+                    tablesSet.add(f)
+                    joinedTables.push(f)
+                })
+            }
+            
+        }))
+        // tables.forEach(t=>{
+        //     const {success,fields,joins}=await loadTableFields(t)
+        //     if(success){
+        //         tableFields[t]=fields
+        //         joins.filter(f=>!tablesSet.has(f)).forEach(f=>{
+        //             tablesSet.add(f)
+        //             newTables.push(f)
+        //         })
+        //     }
+        // })
+
+        return {
+            tableFields,
+            joinedTables
+        }
+    }
+
+    async function run(){
+        setCurrentIter('Loading Tables',0)
+        let tables=await loadTables()
+        const tableSet=new Set(tables)
+        let fieldsObjects={}
+        let newTables=tables
+
+        let iternum=0
+
+        const getCurrentState=(iter)=>{
+            if(iter==1){
+                return 'Loading Primary Table Fields'
+            }
+            return `Loading Join Fields: Stage ${iter-1}`
+        }
+
+        while(newTables.length>0){
+            iternum++
+            console.log('iteration '+iternum)
+            setCurrentIter(getCurrentState(iternum),newTables.length)
+            const {tableFields,joinedTables}=await runTables(newTables,tableSet)
+            tables=tables.concat(joinedTables)
+            newTables=joinedTables
+            fieldsObjects={...fieldsObjects,...tableFields}
+        }
+
+        const result={
+            tables,
+            tableFields: fieldsObjects
+        }
+
+
+
+        document.getElementById('result_area').value = JSON.stringify(result);
+
+        setCurrentIter('Done',0)
+    }
+
+        </script>
+
+        <style>
+            body {
+                margin: 0;
+                padding: 0;
+                font-family: "Arial", sans-serif;
+                background-color: #f2f2f2;
+            }
+
+
+            #myProgress {
+            width: 80%;
+            background-color: #ddd;
+            margin: 20px auto;
+            display: block;
+            }
+
+            #myBar {
+            width: 0%;
+            height: 30px;
+            background-color: #04AA6D;
+            text-align: center;
+            line-height: 30px;
+            color: white;
+            }
+
+            .heading {
+                font-size: 38px;
+                font-weight: bold;
+                margin-bottom: 20px;
+                margin-top: 20px;
+            }
+
+            .container {
+                width: 80%;
+                margin: 0 auto;
+                text-align: center;
+            }
+
+            .button {
+                background-color: green;
+                color: white;
+                width: 100px;
+                height: 40px;
+                border: none;
+                border-radius: 5px;
+                font-size: 16px;
+                margin: 20px auto;
+                display: block;
+            }
+
+            .text {
+                margin: 20px auto;
+            }
+
+            textarea {
+                width: calc(100% - 40px); /* Subtract padding from total width */
+                padding: 10px;
+                height: 400px;
+                margin: 0 auto;
+                display: block;
+                resize: none;
+            }
+
+            label {
+                font-size: 20px; 
+            }
+
+            
+        </style>
+
+    </head>
+<body>
+        <div class="container">
+            <h1 class="heading">SuiteQL Completion Data</h1>
+            <div><button class="button" onclick="run()">Run</button><div>
+            <h2 class="text" id="status">
+                &nbsp;
+            </h2>
+                <div id="myProgress">
+                    <div id="myBar">0%</div>
+                </div>
+            <label for="result_area">Results</label>
+          
+            <textarea id="result_area" readonly></textarea>
+          
+        </div>
+    </body>
+</html>

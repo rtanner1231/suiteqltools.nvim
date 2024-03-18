@@ -3,6 +3,7 @@ local RunSuiteQL=require('suiteqltools.runSuiteQL')
 local TokenConfig=require('suiteqltools.tokenconfig')
 local QueryEditor=require('suiteqltools.editor')
 local HistoryPicker=require('suiteqltools.historyPicker')
+local CompletionData=require('suiteqltools.completion.completionData')
 
 local M={}
 
@@ -22,7 +23,8 @@ M.command_list={
     {value="ResetTokens", callback=TokenConfig.resetTokens},
     {value="ToggleEditor", callback=QueryEditor.toggleQueryEditor},
     {value="EditQuery", callback=QueryEditor.sendCurrentQueryToEditor},
-    {value="History", callback=HistoryPicker.showHistoryPicker}
+    {value="History", callback=HistoryPicker.showHistoryPicker},
+    {value="SetCompletionData",callback=CompletionData.setCompletionData}
 }
 
 M.runCommand=function(command)
