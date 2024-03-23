@@ -3,7 +3,8 @@ local RunSuiteQL=require('suiteqltools.runSuiteQL')
 local TokenConfig=require('suiteqltools.tokenconfig')
 local QueryEditor=require('suiteqltools.editor')
 local HistoryPicker=require('suiteqltools.historyPicker')
-local CompletionData=require('suiteqltools.completion.completionData')
+local completionData=require('suiteqltools.completion.completionData')
+local TablePicker=require('suiteqltools.tablepicker')
 
 local M={}
 
@@ -12,7 +13,7 @@ M.command_list={
     {value="FormatFile",callback=FormatSuiteQL.runFormatAll},
     --{value="RunCurrentQuery",callback=RunSuiteQL.runCurrentQuery},
     --{value="ToggleQueryFullScreen", callback=RunSuiteQL.toggleFullScreen},
-    --{value="ToggleQueryMode", callback=RunSuiteQL.toggleDisplayMode},
+   --{value="ToggleQueryMode", callback=RunSuiteQL.toggleDisplayMode},
     --{value="CloseQuery", callback=RunSuiteQL.closeQuery},
     --{value="SortColumn", callback=RunSuiteQL.sortColumn},
     --{value="NextPage", callback=RunSuiteQL.nextPage},
@@ -24,7 +25,10 @@ M.command_list={
     {value="ToggleEditor", callback=QueryEditor.toggleQueryEditor},
     {value="EditQuery", callback=QueryEditor.sendCurrentQueryToEditor},
     {value="History", callback=HistoryPicker.showHistoryPicker},
-    {value="SetCompletionData",callback=CompletionData.setCompletionData}
+    {value="SetCompletionData",callback=completionData.setCompletionData},
+    {value="ShowTablePicker",callback=TablePicker.showTablePicker},
+    {value="ShowFieldPicker",callback=TablePicker.showFieldPicker},
+    {value="ShowLastTableFieldPicker",callback=TablePicker.showLastTableFieldPicker}
 }
 
 M.runCommand=function(command)

@@ -87,7 +87,7 @@ local arrayTocompletionItems=function(arr)
     local result={}
 
     for _,v in ipairs(arr) do
-        local ele={label=v,kind=cmp.lsp.CompletionItemKind.Value,detail='string'}
+        local ele={label=v.id,kind=cmp.lsp.CompletionItemKind.Value,detail='string'}
         table.insert(result,ele)
     end
     return result

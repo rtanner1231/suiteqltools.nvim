@@ -7,6 +7,9 @@
 - Syntax highlighting for SuiteQL queries
 - Format SuiteQL queries in code
 - SQL editor to run queries against a Netsuite instance
+- Searchable query history
+- Autocomplete tables and fields (Experimental)
+- Show picker for tables and fields from your account
 
 # Requirements
 - [nui.nvim](https://github.com/MunifTanjim/nui.nvim)
@@ -98,7 +101,7 @@ The SQL formatter function uses the [sql-formatter](https://www.npmjs.com/packag
 - **history** (*default: false*) - Enable or disable the history functionality.
 - **historyLimit** (*default: 2000*) - The maximum number of queries to keep in the history.
 - **timeout** (*default: 50000*) - The timeout in milliseconds to wait for a response from a Netsuite REST API call.
-- **completion** (*default: false*) - Set to true to enable the completion feature in the query editor.
+- **completion** (*default: false*) - Set to true to enable the completion feature in the query editor and the tablepicker feature.
 
 # Commands
 This plugin provides the below commands
@@ -112,6 +115,9 @@ This plugin provides the below commands
 - ```:SuiteQL EditQuery``` - Open the query editor with the SuiteQL query under the cursor.  Does nothing if there is no query under the cursor.
 - ```:SuiteQL History``` - Opens the a [Telescope](https://github.com/nvim-telescope/telescope.nvim) picker for searching query history.  Does nothing is history configuration option is false.
 - ```:SuiteQL SetCompletionData``` - Open a dialog to import completion data for the current active profile.  Does nothing if the completion feature is not enabled.
+- ```:SuiteQL ShowTablePicker``` - Display a telescope picker for finding a table id.  See Table / Field Picker section.
+- ```:SuiteQL ShowFieldPicker``` - Display a telescope picker for finding a field id.  See Table / Field Picker section.
+- ```:SuiteQL ShowLastTableFieldPicker``` - Diplay the field picker for the last table selected through either the ShowTablePicker or ShowFieldPicker commands.  See Table / Field Picker section.
 
 # Setup
 Running SuiteQL queries requires Oauth tokens to be setup and saved.  These tokens will be encrypted and stored in a file called sqc in the vim standard data folder.
@@ -219,7 +225,7 @@ Tracking query history can optionally be enabled (See Configuration Options).  R
 Demo: Search query history, open selected query in editor, run query.
 ![suiteqlhistory](https://github.com/rtanner1231/suiteqltools.nvim/assets/142627958/19b83c42-9e06-42e7-bfc0-0c76904c4da6)
 
-# Completion
+# Autocomplete
 *Note: this feature is experimental*
 ![autocomplete](https://github.com/rtanner1231/suiteqltools.nvim/assets/142627958/60916e7d-3922-449d-b200-0ae2aef35435)
 
@@ -238,7 +244,18 @@ This feature enables offline autocomplete for tables and fields in the query edi
 - Table completion will trigger after the string *"from"* and *"join"* followed by whitespace (Case insensitive).  *Note: There is currently an issue where the table completion will not trigger at the beginning of a line, even if from or join preceded it line above.  In this case, adding a space at the start of the line should make it trigger.*
 - Field completion will trigger after a . (period).  Completion without a table or alias is not currently supported.  *Note: The query must be reletively well formed to be able to resolve the tables and aliases.  If the tables and aliases are unable to be resolved, the completion will not trigger* 
 
+# Table / Field lookup
+![tablepicker](https://github.com/rtanner1231/suiteqltools.nvim/assets/142627958/d51a39e1-a29e-4ed7-a9bc-838c1b197e1a)
 
+*Note: This feature requires the Autocompelete feature to be enabled and set up*
+
+Lookup tables in fields in telescope's fuzzy finder pickers.  Pickers use completion data for the currently active profile.
+
+## Usage
+The following commands may be used
+- ```:SuiteQL ShowTablePicker``` - Display a telescope picker for finding a table id.  Press enter to insert the table id at the cursor position.
+- ```:SuiteQL ShowFieldPicker``` - Display a telescope picker for finding a field id.  The first picker will show the list of tables.  Selecting a table will show the list of fields in that table.  Press enter to insert the field id at the cursor position.
+- ```:SuiteQL ShowLastTableFieldPicker``` - Diplay the field picker for the last table selected through either the ShowTablePicker or ShowFieldPicker commands.  Runs ```:SuiteQL ShowFieldPicker``` if no table has been selected.
 
 
 # A note on security
