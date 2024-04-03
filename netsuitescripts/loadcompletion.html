@@ -58,6 +58,40 @@
         renderStatus();
       }
 
+      function parseJoinPairs(table, joinLabel, joinPairs) {
+        const tableFields = joinPairs.reduce((acc, ele) => {
+          const labelSplit = ele.label.split("=").map((m) => m.trim());
+          const tableObjs = labelSplit.map((m) => {
+            const [table, field] = m.split(".").map((s) => s.trim());
+            return {
+              table,
+              field,
+            };
+          });
+          acc.push(...tableObjs);
+          return acc;
+        }, []);
+        const tableFieldMap = tableFields
+          .filter((f) => f.table.toLowerCase() != table.toLowerCase())
+          .reduce((acc, ele) => {
+            if (!acc[ele.table]) {
+              acc[ele.table] = {
+                id: ele.table.toLowerCase(),
+                label: ele.table.startsWith("MAP_")
+                  ? `Map ${joinLabel}`
+                  : joinLabel,
+                fields: [],
+              };
+            }
+            acc[ele.table].fields.push({
+              id: ele.field.toLowerCase(),
+              label: ele.field,
+            });
+            return acc;
+          }, {});
+        return Object.values(tableFieldMap);
+      }
+
       async function loadTables() {
         const action = "getRecordTypes";
         const data = encodeURI(JSON.stringify({ structureType: "FLAT" }));
@@ -84,10 +118,20 @@
           label: f.label,
         }));
 
-        const joins = fieldsdata.joins.map((j) => ({
-          id: j.sourceTargetType.id.toLowerCase(),
-          label: j.label,
-        }));
+        const joins = fieldsdata.joins.flatMap((j) => {
+          const idJoin = {
+            id: j.sourceTargetType.id.toLowerCase(),
+            label: j.label,
+          };
+          const pairJoins = parseJoinPairs(
+            table,
+            j.label,
+            j.sourceTargetType.joinPairs
+          ).filter((f) => f.id != idJoin.id);
+
+          return pairJoins.concat([idJoin]);
+        });
+
         incIterNum();
 
         return {
@@ -173,9 +217,18 @@
             newTables,
             tableSet
           );
-          tables = tables.concat(joinedTables);
+          tables = tables.concat(
+            joinedTables.map(({ id, label }) => ({ id, label }))
+          );
           newTables = joinedTables;
-          fieldsObjects = { ...fieldsObjects, ...tableFields };
+          const joinedFields = joinedTables
+            .filter((f) => f.fields != undefined)
+            .reduce((acc, ele) => {
+              acc[ele.id] = ele.fields;
+              return acc;
+            }, {});
+
+          fieldsObjects = { ...joinedFields, ...fieldsObjects, ...tableFields };
         }
 
         const result = {
@@ -284,7 +337,9 @@
   <body>
     <div class="container">
       <h1 class="heading">SuiteQL Completion Data</h1>
-      <div><button class="button" type="button" onclick="run()">Run</button></div>
+      <div>
+        <button class="button" type="button" onclick="run()">Run</button>
+      </div>
       <h2 class="text" id="status">&nbsp;</h2>
       <div id="myProgress">
         <div id="myBar">0%</div>
@@ -293,7 +348,15 @@
 
       <textarea id="result_area" readonly></textarea>
 
-      <button id="copyBtn" disabled class="copy-button" type="button" onclick="copyToClipboard()">Copy to Clipboard</button>
+      <button
+        id="copyBtn"
+        disabled
+        class="copy-button"
+        type="button"
+        onclick="copyToClipboard()"
+      >
+        Copy to Clipboard
+      </button>
     </div>
   </body>
 </html>

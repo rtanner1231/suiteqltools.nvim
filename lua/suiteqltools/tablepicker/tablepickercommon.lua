@@ -38,12 +38,23 @@ M.maxInList=function(list)
             max=#v.id 
         end
     end
+
+    if max>50 then
+        max=50
+    end
+
     return max
 end
 
 local makeDisplay=function(max,entry)
-    local padding=max+3-#entry.id
-    return entry.id..string.rep(' ',padding)..entry.label
+    local id=entry.id
+
+    if #id>max then
+        id=id:sub(1,max-3)..'...'
+    end
+
+    local padding=max+3-#id
+    return id..string.rep(' ',padding)..entry.label
 end
 
 M.makePickerEntry=function(max,entry)
