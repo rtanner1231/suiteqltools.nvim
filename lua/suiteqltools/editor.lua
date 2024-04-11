@@ -76,7 +76,7 @@ function QueryEditor.new()
     s.currentStatus=""
 
     s:_init()
-    
+
     return s
 end
 
@@ -277,7 +277,7 @@ function QueryEditor:formatQuery()
     self:setEditorText(formattedText)
 end
 
-function QueryEditor:_doRunQuery()
+function QueryEditor:_doRunQuery(writeHistory)
     local qText=self:_getEditorText()
     
     local queryResult=RunQuery.runQuery(qText,self.currentPage)
@@ -305,14 +305,16 @@ function QueryEditor:_doRunQuery()
         self:_setStatusText('Page '..self.currentPage..' of '..totalPages)
     end
 
-    History.addToHistory(qText)
+    if writeHistory then
+        History.addToHistory(qText)
+    end
 end
 
 function QueryEditor:runQuery()
     self.total=0
     self.hasMore=false
     self.currentPage=1
-    self:_doRunQuery()
+    self:_doRunQuery(true)
 end
 
 function QueryEditor:toggleResultFullscreen()
@@ -345,14 +347,14 @@ end
 function QueryEditor:nextPage()
     if self.hasMore then
         self.currentPage=self.currentPage+1
-        self:_doRunQuery()
+        self:_doRunQuery(false)
     end
 end
 
 function QueryEditor:previousPage()
     if self.currentPage>1 then
         self.currentPage=self.currentPage-1
-        self:_doRunQuery()
+        self:_doRunQuery(false)
     end
 end
 
