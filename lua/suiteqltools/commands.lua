@@ -4,6 +4,7 @@ local QueryEditor = require("suiteqltools.editor")
 local HistoryPicker = require("suiteqltools.historyPicker")
 local completionData = require("suiteqltools.completion.completionData")
 local TablePicker = require("suiteqltools.tablepicker")
+local Restlet = require("suiteqltools.util.restlet")
 
 local M = {}
 
@@ -24,6 +25,8 @@ M.command_list = {
 	{ value = "ShowTablePicker", callback = TablePicker.showTablePicker },
 	{ value = "ShowFieldPicker", callback = TablePicker.showFieldPicker },
 	{ value = "ShowLastTableFieldPicker", callback = TablePicker.showLastTableFieldPicker },
+	{ value = "UseRestlet", callback = Restlet.useRestlet },
+	{ value = "UseSuiteTalk", callback = Restlet.useSuiteTalk },
 }
 
 M.runCommand = function(command)

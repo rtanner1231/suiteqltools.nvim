@@ -20,7 +20,7 @@
 - [nsconn.nvim](https://github.com/rtanner1231/nsconn.nvim)
 - Node.js
 - Treesitter with sql installed
-- A Netsuite environment with SuiteTalk Rest Web Services enabled (for Run Query functionality)
+- A Netsuite environment with either this project's restlet installed or SuiteTalk Rest Web Services enabled (for Run Query functionality)
 - Optional: [telescope.nvim](https://github.com/nvim-telescope/telescope.nvim)
 - Optional: [nvim-cmp](https://github.com/hrsh7th/nvim-cmp) (For autocomplete)
 
@@ -115,6 +115,8 @@ This plugin provides the below commands
 - `:SuiteQL ShowTablePicker` - Display a telescope picker for finding a table id. See Table / Field Picker section.
 - `:SuiteQL ShowFieldPicker` - Display a telescope picker for finding a field id. See Table / Field Picker section.
 - `:SuiteQL ShowLastTableFieldPicker` - Diplay the field picker for the last table selected through either the ShowTablePicker or ShowFieldPicker commands. See Table / Field Picker section.
+- `:SuiteQL UseRestlet` - Set the current profile to use the restlet for queries. You will be prompted for a scriptId and deploymentId.
+- `:SuiteQL UseSuiteTalk` - Set the current profile to use SuiteTalk for queries. This is the default.
 
 # Setup
 
@@ -217,10 +219,24 @@ The query editor consists of three sections: the editor pane, the results pane, 
 - Toggle between maximizing and shrinking the results pane with the **toggleResultZoom** keymap (default \<C-s\>f). Maximizing the result pane will automatically focus the result pane. Shrinking the result pane will automatically focus the editor pane.
 - Toggle between showing the results as a table and showing the results as JSON using the **toggleDisplayMode** keymap (default \<C-s\>m).
 
-_Running queries using the suitetalk rest service which has the following quirks:_
+**Note: Due to a quirk of lua, columns may not appear in the same order in the results as they appear in the query**
 
-- Any columns with null in every row is not returned
-- Columns may be returned in a different order then the query specifies.
+## Query service type
+
+SuiteQL queries may either be run using SuiteTalk web services or using a restlet.
+
+Using Suitetalk requires no changes to your Netsuite environment but using the restlet has the following advantages:
+
+- All fields are returned even if they are null. Suitetalk does not return columns where every value is null.
+- More complex queries are supported. Suitetalk does not support some queries that are supported in Suitescript, such as queries with CTEs.
+
+### Restlet setup
+
+- Load the restlet located in this repository at netsuitescripts/rl_suiteqlrun.js into your Netsuite file cabinet.
+- Deploy the restlet
+- Ensure the active connection profile is the same as the environment you deployed the restlet to.
+- Run `:SuiteQL UseRestlet` in Neovim to cause queries run in the current profile to use the restlet. You will be promted for the restlet scriptId and deploymentId.
+- You can run `:SuiteQL UseSuiteTalk` to make queries for the current profile use Suitetalk instead
 
 ## History
 

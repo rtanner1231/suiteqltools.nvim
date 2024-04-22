@@ -10,6 +10,7 @@ local Common = require("suiteqltools.util.common")
 local NSConn = require("nsconn")
 local History = require("suiteqltools.history")
 local CompletionSource = require("suiteqltools.completion.suiteQLSource")
+local Restlet = require("suiteqltools.util.restlet")
 
 local P = function(tbl)
 	return print(vim.inspect(tbl))
@@ -23,6 +24,7 @@ QueryEditor.__index = QueryEditor
 
 function QueryEditor.new()
 	local s = setmetatable({}, QueryEditor)
+
 	local editorPop = Popup({
 		enter = true,
 		border = "double",
@@ -237,18 +239,27 @@ function QueryEditor:setEditorText(text)
 	vim.api.nvim_buf_set_lines(self.editorPop.bufnr, 0, -1, true, text)
 end
 
+function QueryEditor:_getServiceType()
+	local serviceObj = Restlet.getServiceType()
+
+	return serviceObj.serviceType
+end
+
 function QueryEditor:_formatStatusText(text)
 	local activeProfile = NSConn.getActiveProfile()
+	local serviceType = self:_getServiceType()
+
+	local serviceTypeProfile = serviceType .. "   " .. activeProfile
 
 	local statusWidth = vim.fn.winwidth(self.statusBar.winid)
 
-	local textWidth = #text + #activeProfile
+	local textWidth = #text + #serviceTypeProfile
 
 	local spaceWidth = statusWidth - textWidth - 2
 
 	local spaces = string.rep(" ", spaceWidth)
 
-	return text .. spaces .. activeProfile
+	return text .. spaces .. serviceTypeProfile
 end
 
 function QueryEditor:_setStatusText(text)
@@ -291,9 +302,14 @@ function QueryEditor:_doRunQuery(writeHistory)
 	if #queryResult.items == 0 then
 		self:_setStatusText("No results")
 	else
-		local totalPages = math.ceil(self.total / Config.options.queryRun.pageSize)
+		local text = "Page " .. self.currentPage
 
-		self:_setStatusText("Page " .. self.currentPage .. " of " .. totalPages)
+		if self.total > 0 then
+			local totalPages = math.ceil(self.total / Config.options.queryRun.pageSize)
+			text = text .. " of " .. totalPages
+		end
+
+		self:_setStatusText(text)
 	end
 
 	if writeHistory then
