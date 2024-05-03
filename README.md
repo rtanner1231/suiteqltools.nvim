@@ -284,6 +284,6 @@ Lookup tables in fields in telescope's fuzzy finder pickers. Pickers use complet
 
 The following commands may be used
 
-- `:SuiteQL ShowTablePicker` - Display a telescope picker for finding a table id. Press enter to insert the table id at the cursor position.
+- `:SuiteQL ShowTablePicker` - Display a telescope picker for finding a table id. Press enter to insert the table id at the cursor position. Press Ctrl+f to show the field picker for the selected table.
 - `:SuiteQL ShowFieldPicker` - Display a telescope picker for finding a field id. The first picker will show the list of tables. Selecting a table will show the list of fields in that table. Press enter to insert the field id at the cursor position.
 - `:SuiteQL ShowLastTableFieldPicker` - Diplay the field picker for the last table selected through either the ShowTablePicker or ShowFieldPicker commands. Runs `:SuiteQL ShowFieldPicker` if no table has been selected.
