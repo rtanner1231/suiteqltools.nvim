@@ -68,6 +68,10 @@ end
 
 local function getFields(table)
 	local data = getCompletionData()
+	if data == nil or data.tableFields == nil then
+		return {}
+	end
+
 	if data.tableFields[table] ~= nil then
 		return data.tableFields[table]
 	end
