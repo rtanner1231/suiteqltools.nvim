@@ -77,7 +77,7 @@ local runRestlet = function(query, pageSize, offset, opts)
 		offset = offset,
 	}
 
-	print(vim.inspect(requestBody))
+	--print(vim.inspect(requestBody))
 
 	local success, result = NSConn.callRestlet(opts.scriptId, opts.deploymentId, {
 		method = NSConn.Method.POST,
