@@ -411,6 +411,8 @@ end
 
 M.toggleQueryEditor = function()
 	if qeInstance == nil then
+		--ensure that sql is running.  Is this needed?
+		vim.cmd("TSEnable sql")
 		qeInstance = QueryEditor.new()
 	end
 	qeInstance:toggle()
