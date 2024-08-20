@@ -40,7 +40,10 @@ return {
     },
     opts={
         -- override default options
-    }
+    },
+    --always load plugin on javascript or typescript files
+    --needed for sql formatting to work
+    ft={"javascript","typescript"}
 }
 ```
 
