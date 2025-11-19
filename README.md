@@ -80,7 +80,9 @@ return {
         history=false,
         historyLimit=2000,
         completion=false
-    }
+    },
+    picker='auto'
+
 }
 ```
 
@@ -104,6 +106,9 @@ The SQL formatter function uses the [sql-formatter](https://www.npmjs.com/packag
 - **history** (_default: false_) - Enable or disable the history functionality.
 - **historyLimit** (_default: 2000_) - The maximum number of queries to keep in the history.
 - **completion** (_default: false_) - Set to true to enable the completion feature in the query editor and the tablepicker feature.
+
+## General Options
+- **picker** (_default: 'auto'_) - The picker to use.  Possible values are "auto", "telescope", and "snacks".  If set to auto, the picker will be automatically determined based on which pickers are installed.  If multiple pickers are installed, it will choose in this order: "snacks" > "telescope".
 
 # Commands
 

@@ -1,12 +1,7 @@
-local pickers = require "telescope.pickers"
-local finders = require "telescope.finders"
-local conf = require("telescope.config").values
-local previewers = require('telescope.previewers')
-local actions = require "telescope.actions"
-local action_state = require "telescope.actions.state"
-local History=require('suiteqltools.history')
-local Common=require('suiteqltools.util.common')
-local Editor=require('suiteqltools.editor')
+local History = require('suiteqltools.history')
+local Editor = require('suiteqltools.editor')
+
+local Picker = require('suiteqltools.pickers')
 
 -- Define your options table
 -- local options = {
@@ -16,62 +11,49 @@ local Editor=require('suiteqltools.editor')
 -- }
 
 
-local P=function(table)
+local P = function(table)
     print(vim.inspect(table))
 end
 
 -- Define your extension
 local M = {}
 
-local splitToTable=function(str)
-    return Common.splitStr(str,"\n")
-end
 
 -- Function to create the picker
-local picker=function(opts)
+local picker = function(opts)
     opts = opts or {}
 
-    local options=History.getHistoryData()
+    local options = History.getHistoryData()
 
-    -- Create the telescope picker
-    return pickers.new(opts, {
-        prompt_title = 'SuiteQL history',
-        finder = finders.new_table {
-            results = options,
-            entry_maker = function(entry)
-                return {
-                    display = entry.date..'  -  '..entry.display,
-                    value=entry,
-                    ordinal=entry.query
-                }
-            end,
+    Picker.show_picker({
+        items = options,
+        format = {
+            { type = 'field',  value = 'date',    highlight = 'Comment' },
+            { type = 'string', value = '  ' },
+            { type = 'field',  value = 'display', highlight = 'Label' },
         },
-        sorter = conf.generic_sorter(opts),
-        previewer = previewers.new_buffer_previewer {
-            define_preview = function(self, entry, status)
-                local lines=splitToTable(entry.value.query)
-                vim.api.nvim_buf_set_lines(self.state.bufnr, 0, -1, true, lines)
-                vim.bo[self.state.bufnr].filetype = 'sql'
-            end,
-        },
-        attach_mappings = function(prompt_bufnr,map)
-            actions.select_default:replace(function()
-                actions.close(prompt_bufnr)
-                local selection=action_state.get_selected_entry()
-                Editor.openEditorWithQuery(selection.value.query)
-            end)
-            return true
+        defaultAction = function(item)
+            Editor.openEditorWithQuery(item.query)
         end,
-    }):find()
+        showPreview = true,
+        previewFT = 'sql',
+        previewValue = function(item)
+            return item.query
+        end,
+        searchValue = function(item)
+            return item.query
+        end
+
+    })
 end
 
-M.showHistoryPicker=function()
+M.showHistoryPicker = function()
     picker()
 end
 
 
 
-local test=function()
+local test = function()
     M.picker()
 end
 
