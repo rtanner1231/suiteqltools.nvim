@@ -1,255 +1,8 @@
 <html>
   <head>
-    <script language="javascript">
-      const endpoint = "/app/recordscatalog/rcendpoint.nl";
-
-      async function runRequest(action, data) {
-        try {
-          const url = endpoint + "?action=" + action + "&data=" + data;
-          const response = await fetch(url);
-          if (!response.ok) {
-            return {
-              success: false,
-            };
-          }
-          const result = await response.json();
-          return {
-            success: true,
-            result,
-          };
-        } catch (e) {
-          return {
-            success: false,
-          };
-        }
-      }
-
-      let currentIterTotal = 0;
-      let currentIterNum = 0;
-      let currentStage = "";
-
-      function renderStatus() {
-        const percent =
-          currentIterTotal == 0
-            ? 0
-            : `${Math.round((currentIterNum / currentIterTotal) * 100)}%`;
-
-        const elem = document.getElementById("myBar");
-
-        elem.style.width = percent;
-        elem.innerHTML = percent;
-
-        document.getElementById("status").innerHTML = currentStage;
-      }
-
-      function setIterTotal(total) {
-        currentIterTotal = total;
-        currentIterNum = 0;
-      }
-
-      function incIterNum() {
-        currentIterNum++;
-        renderStatus();
-      }
-
-      function setCurrentIter(stage, total) {
-        setIterTotal(total);
-        currentStage = stage;
-        renderStatus();
-      }
-
-      function parseJoinPairs(table, joinLabel, joinPairs) {
-        const tableFields = joinPairs.reduce((acc, ele) => {
-          const labelSplit = ele.label.split("=").map((m) => m.trim());
-          const tableObjs = labelSplit.map((m) => {
-            const [table, field] = m.split(".").map((s) => s.trim());
-            return {
-              table,
-              field,
-            };
-          });
-          acc.push(...tableObjs);
-          return acc;
-        }, []);
-        const tableFieldMap = tableFields
-          .filter((f) => f.table.toLowerCase() != table.toLowerCase())
-          .reduce((acc, ele) => {
-            if (!acc[ele.table]) {
-              acc[ele.table] = {
-                id: ele.table.toLowerCase(),
-                label: ele.table.startsWith("MAP_")
-                  ? `Map ${joinLabel}`
-                  : joinLabel,
-                fields: [],
-              };
-            }
-            acc[ele.table].fields.push({
-              id: ele.field.toLowerCase(),
-              label: ele.field,
-            });
-            return acc;
-          }, {});
-        return Object.values(tableFieldMap);
-      }
-
-      async function loadTables() {
-        const action = "getRecordTypes";
-        const data = encodeURI(JSON.stringify({ structureType: "FLAT" }));
-        const { success, result } = await runRequest(action, data);
-
-        return result.data.map((t) => ({
-          id: t.id.toLowerCase(),
-          label: t.label,
-        }));
-      }
-
-      async function loadTableFields(table) {
-        const action = "getRecordTypeDetail";
-        const data = encodeURI(
-          JSON.stringify({ scriptId: table, detailType: "ss_anal" })
-        );
-        const { success, result } = await runRequest(action, data);
-        if (!success) {
-          return { success: false };
-        }
-        const fieldsdata = result.data;
-        const fields = fieldsdata.fields.map((f) => ({
-          id: f.id.toLowerCase(),
-          label: f.label,
-        }));
-
-        const joins = fieldsdata.joins.flatMap((j) => {
-          const idJoin = {
-            id: j.sourceTargetType.id.toLowerCase(),
-            label: j.label,
-          };
-          const pairJoins = parseJoinPairs(
-            table,
-            j.label,
-            j.sourceTargetType.joinPairs
-          ).filter((f) => f.id != idJoin.id);
-
-          return pairJoins.concat([idJoin]);
-        });
-
-        incIterNum();
-
-        return {
-          tId: table,
-          success: true,
-          fields,
-          joins,
-        };
-      }
-
-      async function runTables(tables, tablesSet) {
-        const tableFields = {};
-        const joinedTables = [];
-        const tablePromises = tables.map((t) => loadTableFields(t.id));
-
-        await Promise.all(tablePromises).then((values) => {
-          values.forEach(({ tId, success, fields, joins }) => {
-            if (success) {
-              tableFields[tId] = fields;
-              joins
-                .filter((f) => !tablesSet.has(f.id))
-                .forEach((f) => {
-                  tablesSet.add(f.id);
-                  joinedTables.push(f);
-                });
-            }
-          });
-        });
-
-        // await Promise.all(
-        //   tables.forEach(async (t) => {
-        //     const { success, fields, joins } = await loadTableFields(t.id);
-        //     incIterNum();
-        //     if (success) {
-        //       tableFields[t] = fields;
-        //       joins
-        //         .filter((f) => !tablesSet.has(f.id))
-        //         .forEach((f) => {
-        //           tablesSet.add(f.id);
-        //           joinedTables.push(f);
-        //         });
-        //     }
-        //   })
-        // );
-        // tables.forEach(t=>{
-        //     const {success,fields,joins}=await loadTableFields(t)
-        //     if(success){
-        //         tableFields[t]=fields
-        //         joins.filter(f=>!tablesSet.has(f)).forEach(f=>{
-        //             tablesSet.add(f)
-        //             newTables.push(f)
-        //         })
-        //     }
-        // })
-
-        return {
-          tableFields,
-          joinedTables,
-        };
-      }
-
-      async function run() {
-        setCurrentIter("Loading Tables", 0);
-        let tables = await loadTables();
-        const tableSet = new Set(tables.map((t) => t.id));
-        let fieldsObjects = {};
-        let newTables = tables;
-
-        let iternum = 0;
-
-        const getCurrentState = (iter) => {
-          if (iter == 1) {
-            return "Loading Primary Table Fields";
-          }
-          return `Loading Join Fields: Stage ${iter - 1}`;
-        };
-
-        while (newTables.length > 0) {
-          iternum++;
-          console.log("iteration " + iternum);
-          setCurrentIter(getCurrentState(iternum), newTables.length);
-          const { tableFields, joinedTables } = await runTables(
-            newTables,
-            tableSet
-          );
-          tables = tables.concat(
-            joinedTables.map(({ id, label }) => ({ id, label }))
-          );
-          newTables = joinedTables;
-          const joinedFields = joinedTables
-            .filter((f) => f.fields != undefined)
-            .reduce((acc, ele) => {
-              acc[ele.id] = ele.fields;
-              return acc;
-            }, {});
-
-          fieldsObjects = { ...joinedFields, ...fieldsObjects, ...tableFields };
-        }
-
-        const result = {
-          tables,
-          tableFields: fieldsObjects,
-        };
-
-        document.getElementById("result_area").value = JSON.stringify(result);
-
-        setCurrentIter("Done", 0);
-        //enable copybtn
-        document.getElementById("copyBtn").disabled = false;
-      }
-      function copyToClipboard() {
-        const textarea = document.getElementById("result_area");
-        textarea.select();
-        document.execCommand("copy");
-      }
-    </script>
-
+    <title>SuiteQL Completion Data Loader</title>
     <style>
+      /* --- General Layout --- */
       body {
         margin: 0;
         padding: 0;
@@ -257,11 +10,42 @@
         background-color: #f2f2f2;
       }
 
-      #myProgress {
+      .container {
         width: 80%;
+        margin: 0 auto;
+        text-align: center;
+        padding-top: 20px;
+      }
+
+      /* --- Typography --- */
+      .heading {
+        font-size: 38px;
+        font-weight: bold;
+        margin-bottom: 20px;
+        color: #333;
+      }
+
+      label {
+        font-size: 20px;
+        display: block;
+        margin-bottom: 10px;
+        font-weight: bold;
+      }
+
+      #status {
+        font-size: 18px;
+        margin: 20px auto;
+        min-height: 24px; /* Prevent layout shift */
+        color: #555;
+      }
+
+      /* --- Components --- */
+      #myProgress {
+        width: 100%;
         background-color: #ddd;
         margin: 20px auto;
-        display: block;
+        border-radius: 5px;
+        overflow: hidden;
       }
 
       #myBar {
@@ -271,79 +55,386 @@
         text-align: center;
         line-height: 30px;
         color: white;
+        transition: width 0.3s ease;
       }
 
-      .heading {
-        font-size: 38px;
-        font-weight: bold;
+      textarea {
+        width: 100%;
+        padding: 10px;
+        height: 400px;
         margin-bottom: 20px;
-        margin-top: 20px;
+        resize: none;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        box-sizing: border-box;
+        font-family: monospace;
       }
 
-      .container {
-        width: 80%;
-        margin: 0 auto;
-        text-align: center;
-      }
-
-      .button {
-        background-color: green;
-        color: white;
-        width: 100px;
+      /* --- Buttons --- */
+      button {
         height: 40px;
         border: none;
         border-radius: 5px;
         font-size: 16px;
-        margin: 20px auto;
-        display: block;
-      }
-
-      .text {
-        margin: 20px auto;
-      }
-
-      textarea {
-        width: calc(100% - 40px); /* Subtract padding from total width */
-        padding: 10px;
-        height: 400px;
+        cursor: pointer;
         margin: 0 auto;
         display: block;
-        resize: none;
+        transition: background-color 0.2s;
+      }
+
+      .run-button {
+        background-color: green;
+        color: white;
+        width: 100px;
+      }
+      .run-button:hover {
+        background-color: darkgreen;
       }
 
       .copy-button {
         background-color: #007bff;
         color: white;
-        width: 150px;
-        height: 40px;
-        border: none;
-        border-radius: 5px;
-        font-size: 16px;
-        margin: 20px auto;
-        display: block;
+        width: 160px;
       }
-
+      .copy-button:hover:not(:disabled) {
+        background-color: #0056b3;
+      }
       .copy-button:disabled {
         background-color: #ccc;
         color: #999;
         cursor: not-allowed;
       }
-
-      label {
-        font-size: 20px;
-      }
     </style>
+
+    <script language="javascript">
+      /**
+       * Main Class to handle SuiteQL Metadata Loading
+       */
+      class SuiteQLMetadataLoader {
+        constructor() {
+          this.endpoint = "/app/recordscatalog/rcendpoint.nl";
+          this.state = {
+            currentIterTotal: 0,
+            currentIterNum: 0,
+            currentStage: "",
+          };
+          
+          // DOM Elements cache
+          this.ui = {
+            bar: null,
+            status: null,
+            resultArea: null,
+            copyBtn: null,
+          };
+        }
+
+        init() {
+          this.ui.bar = document.getElementById("myBar");
+          this.ui.status = document.getElementById("status");
+          this.ui.resultArea = document.getElementById("result_area");
+          this.ui.copyBtn = document.getElementById("copyBtn");
+        }
+
+        // --- UI Methods ---
+
+        updateUI() {
+          const { currentIterTotal, currentIterNum, currentStage } = this.state;
+          const percentage = currentIterTotal === 0 
+            ? 0 
+            : Math.round((currentIterNum / currentIterTotal) * 100);
+          
+          const percentString = `${percentage}%`;
+          
+          this.ui.bar.style.width = percentString;
+          this.ui.bar.innerHTML = percentString;
+          this.ui.status.innerHTML = currentStage;
+        }
+
+        setStage(stageName, totalItems) {
+          this.state.currentStage = stageName;
+          this.state.currentIterTotal = totalItems;
+          this.state.currentIterNum = 0;
+          this.updateUI();
+        }
+
+        incrementProgress() {
+          this.state.currentIterNum++;
+          this.updateUI();
+        }
+
+        // --- API / Network Methods ---
+
+        async runRequest(action, data) {
+          try {
+            const url = `${this.endpoint}?action=${action}&data=${data}`;
+            const response = await fetch(url);
+            
+            if (!response.ok) return { success: false };
+            
+            const result = await response.json();
+            return { success: true, result };
+          } catch (e) {
+            console.error("Request Failed:", e);
+            return { success: false };
+          }
+        }
+
+        getRectype(urlString) {
+            try {
+                const url = new URL(urlString, "http://dummy");
+                const rectype = url.searchParams.get("rectype");
+                return rectype !== null ? rectype : "";
+            } catch (e) {
+                console.error("Invalid URL provided:", e);
+                return "";
+            }
+        }   
+
+        /**
+         * Helper to fetch the internal numerical ID for a table/record.
+         */
+        async getRecordId(rec){
+            try{
+                //Use the direct endpoint instead of the N/url api.
+                //This is faster and allows us to run async but it may be more brittle
+                const requestUrl=`/app/common/scripting/ClientScriptHandler.nl?script=&deploy=&jrid=1&jrmethod=remoteObject.nlapiResolveURL&jrparams=["RECORD"%2C"${rec}"%2C1%2Cnull]`
+                const result=await fetch(requestUrl);
+                const body=await result.json();
+
+                if(!body.result){
+                   return '';
+                }
+                const resultUrl=body.result;
+                return this.getRectype(resultUrl);
+            } catch(e) {
+                  return '';
+            }
+        }
+
+        async loadRecordTypes() {
+          const action = "getRecordTypes";
+          const data = encodeURI(JSON.stringify({ structureType: "FLAT" }));
+          const { success, result } = await this.runRequest(action, data);
+
+          if (!success) return [];
+
+          return result.data.map((t) => ({
+            id: t.id.toLowerCase(),
+            label: t.label,
+          }));
+        }
+
+        async loadTableDetail(tableId) {
+          const action = "getRecordTypeDetail";
+          const data = encodeURI(
+            JSON.stringify({ scriptId: tableId, detailType: "ss_anal" })
+          );
+          const { success, result } = await this.runRequest(action, data);
+
+          if (!success) return { success: false };
+
+          const fieldsData = result.data;
+          
+          // Process Fields
+          const fields = fieldsData.fields.map((f) => ({
+            id: f.id.toLowerCase(),
+            label: f.label,
+          }));
+
+          // Process Joins
+          const joins = fieldsData.joins.flatMap((join) => {
+            // Direct ID join
+            const idJoin = {
+              id: join.sourceTargetType.id.toLowerCase(),
+              label: join.label,
+            };
+
+            // Mapped pair joins
+            const pairJoins = this.parseJoinPairs(
+              tableId,
+              join.label,
+              join.sourceTargetType.joinPairs
+            ).filter((f) => f.id !== idJoin.id);
+
+            return pairJoins.concat([idJoin]);
+          });
+
+          this.incrementProgress();
+
+          return {
+            tId: tableId,
+            success: true,
+            fields,
+            joins,
+          };
+        }
+
+        parseJoinPairs(currentTable, joinLabel, joinPairs) {
+          const allTableFields = joinPairs.reduce((acc, pair) => {
+            const parts = pair.label.split("=").map((s) => s.trim());
+            
+            const tableObjs = parts.map((part) => {
+              const [table, field] = part.split(".").map((s) => s.trim());
+              return { table, field };
+            });
+            
+            acc.push(...tableObjs);
+            return acc;
+          }, []);
+
+          const tableFieldMap = allTableFields
+            .filter((tf) => tf.table.toLowerCase() !== currentTable.toLowerCase())
+            .reduce((acc, tf) => {
+              if (!acc[tf.table]) {
+                acc[tf.table] = {
+                  id: tf.table.toLowerCase(),
+                  label: tf.table.startsWith("MAP_") ? `Map ${joinLabel}` : joinLabel,
+                  fields: [],
+                };
+              }
+              
+              acc[tf.table].fields.push({
+                id: tf.field.toLowerCase(),
+                label: tf.field,
+              });
+              
+              return acc;
+            }, {});
+
+          return Object.values(tableFieldMap);
+        }
+
+        // --- Core Logic ---
+
+        async processBatch(tablesToProcess, processedTableSet) {
+          const tableFields = {};
+          const newJoinedTables = [];
+          
+          // Create promises for all tables in this batch
+          const promises = tablesToProcess.map((t) => this.loadTableDetail(t.id));
+          const results = await Promise.all(promises);
+
+          results.forEach(({ tId, success, fields, joins }) => {
+            if (success) {
+              tableFields[tId] = fields;
+              
+              joins
+                .filter((f) => !processedTableSet.has(f.id))
+                .forEach((f) => {
+                  processedTableSet.add(f.id);
+                  newJoinedTables.push(f);
+                });
+            }
+          });
+
+          return {
+            tableFields,
+            newJoinedTables,
+          };
+        }
+
+        async start() {
+          this.init(); // Ensure DOM is ready
+          this.setStage("Loading Tables", 0);
+
+          // Initial Load
+          let tables = await this.loadRecordTypes();
+          const processedTableSet = new Set(tables.map((t) => t.id));
+          
+          let allFieldsObject = {};
+          let currentBatch = tables;
+          let iterationCount = 0;
+
+          // BFS Loop
+          while (currentBatch.length > 0) {
+            iterationCount++;
+            
+            const stageName = iterationCount === 1 
+              ? "Loading Primary Table Fields" 
+              : `Loading Join Fields: Stage ${iterationCount - 1}`;
+              
+            console.log(`Iteration ${iterationCount}: Processing ${currentBatch.length} tables`);
+            this.setStage(stageName, currentBatch.length);
+
+            const { tableFields, newJoinedTables } = await this.processBatch(
+              currentBatch,
+              processedTableSet
+            );
+
+            // Aggregate Results
+            tables = tables.concat(
+              newJoinedTables.map(({ id, label }) => ({ id, label }))
+            );
+            
+            // Prepare next batch
+            currentBatch = newJoinedTables;
+
+            // Format fields from joins that have specific field definitions
+            const specificJoinFields = newJoinedTables
+              .filter((f) => f.fields !== undefined)
+              .reduce((acc, ele) => {
+                acc[ele.id] = ele.fields;
+                return acc;
+              }, {});
+
+            allFieldsObject = { ...specificJoinFields, ...allFieldsObject, ...tableFields };
+          }
+
+          this.setStage("Resolving Numerical IDs", tables.length);
+          
+          // We use map to trigger all requests concurrently (up to browser limit)
+          // instead of awaiting them one-by-one, which makes this much faster.
+          const idPromises = tables.map(async (table) => {
+            const numId = await this.getRecordId(table.id);
+            // Assign the result to the new 'i' property
+            table.i = numId; 
+            this.incrementProgress();
+          });
+
+          // Wait for all ID requests to finish
+          await Promise.all(idPromises);
+
+          // Final Output
+          const result = {
+            tables,
+            tableFields: allFieldsObject,
+          };
+
+          this.ui.resultArea.value = JSON.stringify(result);
+          this.setStage("Done", 0);
+          this.ui.copyBtn.disabled = false;
+        }
+      }
+
+      // --- Global Functions for HTML Event Handlers ---
+
+      const app = new SuiteQLMetadataLoader();
+
+      function run() {
+        app.start();
+      }
+
+      function copyToClipboard() {
+        const textarea = document.getElementById("result_area");
+        textarea.select();
+        document.execCommand("copy");
+      }
+    </script>
   </head>
   <body>
     <div class="container">
       <h1 class="heading">SuiteQL Completion Data</h1>
+      
       <div>
-        <button class="button" type="button" onclick="run()">Run</button>
+        <button class="run-button" type="button" onclick="run()">Run</button>
       </div>
-      <h2 class="text" id="status">&nbsp;</h2>
+      
+      <h2 id="status">&nbsp;</h2>
+      
       <div id="myProgress">
         <div id="myBar">0%</div>
       </div>
+      
       <label for="result_area">Results</label>
 
       <textarea id="result_area" readonly></textarea>

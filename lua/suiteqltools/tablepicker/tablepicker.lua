@@ -3,6 +3,7 @@ local CompletionData = require("suiteqltools/completion/completionData")
 local FieldPicker = require("suiteqltools.tablepicker.fieldpicker")
 local TablePickerCommon = require("suiteqltools.tablepicker.tablepickercommon")
 local Picker = require("suiteqltools.pickers")
+local OpenTable = require("suiteqltools.tableopen")
 
 local M = {}
 local picker = function(isFieldPicker, positionParms)
@@ -63,6 +64,20 @@ local picker = function(isFieldPicker, positionParms)
             end,
             keyMap = '<C-f>',
             closePicker = true
+        }, {
+            name = 'EditTable',
+            action = function(item)
+                OpenTable.editTable(item.id)
+            end,
+            keyMap = '<C-e>',
+            closePicker = false
+        }, {
+            name = 'ListTable',
+            action = function(item)
+                OpenTable.listTable(item.id)
+            end,
+            keyMap = '<C-l>',
+            closePicker = false
         } },
         showPreview = false,
         searchValue = function(item)
